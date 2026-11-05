@@ -3,11 +3,7 @@
 (function (R) {
   'use strict';
   R.PLANNED = {
-    job: ['Right triangle', 'Roof pitch', 'Hip & valley rafter', 'Jack rafters', 'Footing', 'Column (tube form)', 'Wall studs', 'Drywall', 'Roofing', 'Board feet', 'Equal spacing', 'Circle & arc', 'Crown molding', 'Polygon', 'Paint', 'Flooring & tile', 'Gravel, mulch, sand', 'Square footage', 'Brick & block', 'Grade & slope'],
     calc: ['Everyday + scientific keypad'],
-    money: ['Loan payment', 'Mortgage (with taxes)', 'Compound interest', 'Savings goal', 'Tip & split', 'Discount', 'Sales tax', 'Margin & markup', 'Hourly ↔ salary', 'Inflation', 'Unit price compare', 'Credit card payoff', 'Simple interest', 'Break-even'],
-    time: ['Time card', 'Hours between times', 'Add or subtract time', 'Days between dates', 'Add days to a date', 'Business days', 'Age', 'Countdown', 'Military time'],
-    travel: ['Trip fuel cost', 'Gas mileage', 'Speed, distance, time', 'Pace', 'Distance between places'],
     convert: ['Length', 'Area', 'Volume', 'Weight', 'Temperature', 'Speed', 'Pressure', 'Energy', 'Power', 'Data', 'Angle', 'Fuel economy', 'Flow', 'Cooking'],
     health: ['BMI', 'BMR', 'Daily calories', 'Body fat', 'Ideal weight', 'Water intake', 'Due date', 'Heart rate zones', 'Calories burned', 'Macros'],
     math: ['Percentage', 'Percent change', 'Fractions', 'Ratio', 'Mean, median, mode', 'Standard deviation', 'GCF & LCM', 'Prime factors', 'Quadratic', 'Rounding', 'Percent error', 'Scientific notation'],

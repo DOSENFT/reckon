@@ -2,11 +2,16 @@
   "engine": [
     "engine/core.js",
     "engine/length.js",
-    "engine/keypad.js"
+    "engine/keypad.js",
+    "engine/dates.js"
   ],
   "calcs": [
     "calcs/registry.js",
     "calcs/job.js",
+    "calcs/job2.js",
+    "calcs/money.js",
+    "calcs/time.js",
+    "calcs/travel.js",
     "calcs/planned.js"
   ],
   "app": [

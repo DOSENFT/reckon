@@ -59,7 +59,7 @@
   R.dateOf = dateOf;
 
   function timeOf(s, label) {
-    const t = String(s).trim().toLowerCase().replace(/\s+/g, '');
+    let t = String(s).trim().toLowerCase().replace(/\s+/g, '').replace(/\.(?=\d{2})/, ':').replace(/^(\d{3,4})(hours|hrs|h)?$/, function (_, d) { return d.slice(0, -2) + ':' + d.slice(-2); });
     let m = t.match(/^(\d{1,2})(?::(\d{2}))?(am|pm|a|p)?$/);
     if (!m) R.fail(label + ': use a time like 7:30 or 7:30pm.');
     let h = +m[1]; const mi = m[2] ? +m[2] : 0; const ap = m[3];
