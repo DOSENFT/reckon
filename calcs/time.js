@@ -27,7 +27,8 @@
         const a = v[d[0] + 'In'], b = v[d[0] + 'Out'], brk = v[d[0] + 'Brk'] || 0;
         if (a == null && b == null) return;
         if (a == null || b == null) R.fail(d[1] + ' needs both an in and an out time.', a == null ? d[0] + 'In' : d[0] + 'Out');
-        let mins = b - a; if (mins <= 0) mins += 1440;          // past midnight
+        if (a === b) R.fail(d[1] + ': in and out are the same time. For a day off, clear both.', d[0] + 'Out');
+        let mins = b - a; if (mins < 0) mins += 1440;           // past midnight
         if (brk >= mins) R.fail(d[1] + ': the break is as long as the shift.', d[0] + 'Brk');
         mins -= brk; total += mins;
         days.push({ label: d[1], value: R.hm(mins), note: R.fmt(mins / 60, 2) + ' h' });

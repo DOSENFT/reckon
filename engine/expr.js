@@ -161,6 +161,20 @@
   }
 
   R.evalExpr = evaluate;
+
+  /** The Calc keypad's keys as one line, read and shown the same way. The e key's e touching a digit,
+      a point or a word ("2e5", "Anse", "esin") would read as 2×10⁵ or an unknown word, so a times dot
+      goes between them: 2⋅e⋅5. */
+  R.calcText = function (toks) {
+    let s = '';
+    (Array.isArray(toks) ? toks : []).forEach(function (t, i) {
+      t = String(t);
+      const prev = i ? String(toks[i - 1]) : '';
+      const touches = (t === 'e' && /[A-Za-z0-9.]$/.test(prev)) || (prev === 'e' && /^[A-Za-z0-9.]/.test(t));
+      s += (touches ? '⋅' : '') + t;
+    });
+    return s;
+  };
   /** A result as the screen shows it: up to 10 decimals, exponents for huge and tiny. */
   R.fmtCalc = function (x) {
     if (x === 0) return '0';

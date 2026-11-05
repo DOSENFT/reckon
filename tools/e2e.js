@@ -67,6 +67,12 @@ async function taps(page, seq, scope = '.keys') {
       check(/divide by zero/.test(await page.textContent('.ro-msg')), `${s.name}: Calc 1 ÷ 0 says so in words`);
       await taps(page, 'ac 5 0 + 1 0 % =');
       check(await page.textContent('.ro-main') === '55', `${s.name}: Calc 50 + 10% = 55`);
+      // the e key (2nd π) is Euler's number: 2·e·5 = 27.18…, never read as 2×10⁵ (the independent check's find)
+      await taps(page, 'ac 2 2nd pi 5 =');
+      check(await page.textContent('.ro-main') === '27.1828182846', `${s.name}: Calc 2 e 5 = 27.1828182846 (not 200,000)`);
+      await taps(page, 'ac 2 2nd pi - 3 =');
+      check(await page.textContent('.ro-main') === '2.4365636569', `${s.name}: Calc 2 e − 3 = 2.4365636569 (not 0.002)`);
+      await taps(page, 'ac 5 0 + 1 0 % =');
       await page.screenshot({ path: path.join(OUT, `app-${s.name}-calc.png`) });
 
       // every calculator opens with an answer
@@ -91,6 +97,21 @@ async function taps(page, seq, scope = '.keys') {
       await page.fill('[data-field="waste"] input', '10');
       await page.reload(); await page.waitForSelector('.result .big');
       check(await page.textContent('.result .big') === '4.89 cu yd', `${s.name}: typed values survive a reload`);
+      // a damaged saved choice falls back to the usual one: the box and the answer agree (the independent check's find)
+      const keepFields = await page.evaluate(() => localStorage.getItem('reckon.fields'));
+      await page.evaluate(() => localStorage.setItem('reckon.fields', JSON.stringify({ 'concrete-slab': { bag: '999' } })));
+      await page.reload(); await page.waitForSelector('.result');
+      const dmg = await page.evaluate(() => ({ bad: document.querySelector('.result').classList.contains('bad'), bag: document.querySelector('[data-field="bag"] select').value, big: (document.querySelector('.result .big') || {}).textContent }));
+      check(!dmg.bad && dmg.bag === '80' && /cu yd/.test(dmg.big || ''), `${s.name}: a damaged saved bag size opens as 80 lb with an answer (${JSON.stringify(dmg)})`);
+      await page.evaluate((v) => { if (v) localStorage.setItem('reckon.fields', v); }, keepFields);
+      // links that try to break the page: a broken search address and a name every object has
+      for (const h of ['#/find/%', '#/find/%E0%A4%A', '#/c/constructor', '#/c/__proto__', '#/c/toString']) {
+        const before = errors.length;
+        await page.evaluate((x) => { location.hash = x; }, h);
+        await page.waitForTimeout(150);
+        const shown = await page.evaluate(() => !!document.querySelector('.search, .row, .keys .k'));
+        check(errors.length === before && shown, `${s.name}: the link ${h} opens a normal screen, no error`);
+      }
       await page.evaluate(() => { location.hash = '#/c/time-card'; });
       await page.waitForSelector('.result .big');
       await page.screenshot({ path: path.join(OUT, `app-${s.name}-timecard.png`) });

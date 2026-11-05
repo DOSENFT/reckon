@@ -39,7 +39,7 @@ The 🔍 at the top finds any calculator by name or word ("stringer", "quikrete"
 
 ## How sure are the answers?
 
-Every calculator carries worked examples, calculated by hand before the code ran, and the tests check them. Every input box is also fed junk (empty, letters, negatives, 1/0, huge numbers, code) and must answer in plain words or refuse. Never NaN.
+Every calculator carries worked examples, calculated by hand before the code ran, and the tests check them. Every input box is also fed junk (empty, letters, negatives, 0, 1/0, numbers too big or too small for a phone like 1e308, code) and must answer in plain words or refuse. Never NaN, never a blank "—".
 Formulas are the standard published ones and are named on screen: IRC stair limits, the US Navy body-fat method, Mifflin–St Jeor, AVMA pet ages, NEC K-values for voltage drop, exact NIST unit factors.
 Estimates say so on screen: motor amps (use the NEC table or the nameplate to size wire), material weights, MET calories.
 
@@ -53,8 +53,8 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 ## For whoever works on it
 
 ```
-node --test "tests/*.test.js"      # 261 tests: engine, every calculator, the math reader, install/offline files
-node tools/e2e.js 8840             # the real app in Edge at phone and PC size: keypads, all 108 calculators, install check, offline
+node --test "tests/*.test.js"      # 268 tests: engine, every calculator, the math reader, install/offline files
+node tools/e2e.js 8840             # 55 checks: the real app in Edge at phone and PC size: keypads, all 108 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
 ```
 

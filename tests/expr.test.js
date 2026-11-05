@@ -5,6 +5,21 @@ const R = require('./load');
 const ev = (s, o) => R.evalExpr(s, o);
 const near = (a, b, eps = 1e-9) => assert.ok(Math.abs(a - b) < eps, `${a} is not ${b}`);
 
+test('the Calc keypad\'s e key is Euler\'s number, never "times ten to the"', () => {
+  const keys = (...k) => R.calcText(k);
+  assert.equal(keys('2', 'e', '5'), '2⋅e⋅5');
+  near(ev(keys('2', 'e', '5')), 2 * Math.E * 5);                 // 27.18…, not 200,000
+  near(ev(keys('2', 'e', '−', '3')), 2 * Math.E - 3);            // 2.436…, not 0.002
+  near(ev(keys('2', 'e', '+', '3')), 2 * Math.E + 3);
+  near(ev(keys('e', 'e')), Math.E * Math.E);                      // not 'I don't know "ee"'
+  near(ev(keys('Ans', 'e'), { ans: 2 }), 2 * Math.E);
+  near(ev(keys('e', 'sin(', '30', ')'), { deg: true }), Math.E / 2);
+  near(ev(keys('2.5', 'e', '.', '5')), 2.5 * Math.E * 0.5);
+  assert.equal(keys('2', '×', 'e'), '2×e');                        // nothing added where nothing touches
+  assert.equal(ev('2e5'), 200000);                                 // typed scientific notation still reads as before
+  assert.equal(R.calcText(null), '');
+});
+
 test('order of operations and brackets', () => {
   assert.equal(ev('2 + 3 * 4'), 14);
   assert.equal(ev('(2 + 3) * 4'), 20);

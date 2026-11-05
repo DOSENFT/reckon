@@ -35,12 +35,14 @@ for (const c of R.CALCS) {
   });
 
   test(`${c.face} / ${c.name}: bad input in every field is refused in plain words`, () => {
-    const junk = ['', 'abc', '-5', '1/0', '9'.repeat(30), '<script>alert(1)</script>', '  ', '—'];
+    // "—" is what the number formatters show for a result they can't show: it must never reach the screen as an answer.
+    const junk = ['', 'abc', '-5', '0', '1/0', '9'.repeat(30), '1e308', '-1e308', '1e-308', '0.00000000000001',
+      '1e308 1e308', '<script>alert(1)</script>', '  ', '—'];
     for (const inp of c.inputs) {
       for (const j of junk) {
         const r = R.runCalc(c, { [inp.id]: j });
         if (r.ok) {
-          for (const o of r.out) assert.ok(!/NaN|Infinity|undefined/.test(o.value), `${c.id}.${inp.id}="${j}" gave ${o.value}`);
+          for (const o of r.out) assert.ok(!/—|NaN|Infinity|undefined/.test(o.value), `${c.id}.${inp.id}="${j}" gave ${o.label} = ${o.value}`);
         } else {
           for (const e of r.errors) assert.ok(typeof e.msg === 'string' && e.msg.length > 3 && !/undefined|NaN|\[object/.test(e.msg), `${c.id}.${inp.id}: ${e.msg}`);
         }
@@ -48,6 +50,56 @@ for (const c of R.CALCS) {
     }
   });
 }
+
+// The independent check's finds (2026-11-05), each one failing on the code before its fix.
+const run = (id, raws) => R.runCalc(R.getCalc(id), raws);
+const val = (r, label) => (r.out.find((o) => o.label === label) || {}).value;
+
+test('huge numbers in a list still give the real average and spread, never a blank', () => {
+  const s = run('stats', { xs: '1e308 1e308' });
+  assert.equal(s.ok, true, JSON.stringify(s.errors));
+  assert.equal(val(s, 'Mean (average)'), '1e+308');
+  assert.equal(val(s, 'Sum'), 'Too big to show');
+  const d = run('std-dev', { xs: '1e160 2e160' });
+  assert.equal(d.ok, true, JSON.stringify(d.errors));
+  assert.equal(val(d, 'Sample standard deviation'), '7.071068e+159');   // (2e160 − 1e160) / √2
+  assert.equal(val(d, 'Sample variance'), 'Too big to show');            // 5e319 is past the largest number a phone holds
+  assert.equal(val(run('std-dev', {}), 'Sample standard deviation'), '2.13809');   // ordinary lists unchanged
+});
+
+test('a loan at a tiny rate pays like a 0% loan, not a blank', () => {
+  const r = run('loan', { amt: '25000', rate: '0.00000000000001', years: '5' });
+  assert.equal(r.ok, true, JSON.stringify(r.errors));
+  assert.equal(val(r, 'Monthly payment'), '$416.67');                      // 25,000 ÷ 60
+  assert.equal(val(run('loan', {}), 'Monthly payment'), '$495.03');       // the published 7% / 5 yr figure is unchanged
+});
+
+test('stairs refuse a riser or tread too small to be a step', () => {
+  const r = run('stairs', { maxR: '1/64"' });
+  assert.equal(r.ok, false);
+  assert.equal(r.errors[0].field, 'maxR');
+  assert.match(r.errors[0].msg, /at least 4"/);
+  assert.equal(run('stairs', { tread: '1/8"' }).errors[0].field, 'tread');
+});
+
+test('a time card day with the same in and out time is refused, not counted as 23.5 hours', () => {
+  const r = run('time-card', { monIn: '7:00', monOut: '7:00' });
+  assert.equal(r.ok, false);
+  assert.equal(r.errors[0].field, 'monOut');
+  assert.match(r.errors[0].msg, /Monday: in and out are the same time/);
+  assert.equal(val(run('time-card', { monIn: '22:00', monOut: '6:00', monBrk: '0' }), 'Monday'), '8:00');   // overnight still works
+});
+
+test('a fraction with 0 on the bottom names the box it was typed in', () => {
+  const r = run('stairs', { rise: '1/0' });
+  assert.equal(r.ok, false);
+  assert.match(r.errors[0].msg, /^Total rise: /);
+});
+
+test('a link to a name every object has (constructor, toString) finds no calculator', () => {
+  for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', '', null, undefined, 42]) assert.equal(R.getCalc(id), null, String(id));
+  assert.equal(R.getCalc('rafter').id, 'rafter');
+});
 
 test('search finds calculators by name, face and keywords', () => {
   assert.equal(R.searchCalcs('rafter')[0].id, 'rafter');

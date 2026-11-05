@@ -6,7 +6,8 @@
   /** Monthly payment for a loan: P at an annual rate over n months. */
   function payment(P, annualPct, n) {
     const i = annualPct / 100 / 12;
-    return i === 0 ? P / n : P * i / (1 - Math.pow(1 + i, -n));
+    // 1 − (1+i)^−n written as −expm1(−n·ln(1+i)): exact even for a tiny rate, where the plain form loses every digit
+    return i === 0 ? P / n : P * i / -Math.expm1(-n * Math.log1p(i));
   }
   R.payment = payment;
   const TERM = function (v) { return { id: 'years', label: 'Term (years)', kind: 'number', value: String(v), min: 0.0833, max: 50, zero: false }; };
@@ -68,9 +69,9 @@
   function fv(P, C, i, n) {
     if (i === 0) return P + C * n;
     const g = Math.pow(1 + i, n);
-    return P * g + C * (g - 1) / i;
+    return P * g + C * Math.expm1(n * Math.log1p(i)) / i;
   }
-  const monthlyRate = function (annualPct, perYear) { return Math.pow(1 + annualPct / 100 / perYear, perYear / 12) - 1; };
+  const monthlyRate = function (annualPct, perYear) { return Math.expm1(perYear / 12 * Math.log1p(annualPct / 100 / perYear)); };
   const COMPOUND = { id: 'k', label: 'Compounded', kind: 'choice', value: '12', options: [['1', 'Yearly'], ['4', 'Quarterly'], ['12', 'Monthly'], ['365', 'Daily']] };
 
   R.calc({
@@ -109,7 +110,7 @@
       if (n < 1) R.fail('The time must be at least a month.', 'years');
       const grown = fv(v.p, 0, i, n);
       if (grown >= v.goal) return [{ label: 'Each month', value: $(0), big: true, note: 'What you have already grows past the goal' }];
-      const C = i === 0 ? (v.goal - grown) / n : (v.goal - grown) * i / (Math.pow(1 + i, n) - 1);
+      const C = i === 0 ? (v.goal - grown) / n : (v.goal - grown) * i / Math.expm1(n * Math.log1p(i));
       return [
         { label: 'Each month', value: $(C), big: true, note: n + ' months' },
         { label: 'You put in', value: $(v.p + C * n) },

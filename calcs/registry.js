@@ -20,7 +20,7 @@
 
   const KINDS = ['length', 'number', 'int', 'percent', 'money', 'choice', 'date', 'time', 'list', 'text'];
   R.CALCS = [];
-  const BY_ID = {};
+  const BY_ID = Object.create(null);   // no inherited names: a link to #/c/constructor finds nothing
 
   /** Register a calculator. Refuses a malformed one loudly, so a typo never ships quietly. */
   R.calc = function (def) {
@@ -43,7 +43,7 @@
     BY_ID[def.id] = def;
     return def;
   };
-  R.getCalc = function (id) { return BY_ID[id] || null; };
+  R.getCalc = function (id) { return typeof id === 'string' && BY_ID[id] ? BY_ID[id] : null; };
   R.calcsFor = function (face) { return R.CALCS.filter(function (c) { return c.face === face; }); };
 
   function dateOf(s, label) {
@@ -142,8 +142,12 @@
       const out = (def.run(v) || []).filter(Boolean).map(function (o) {
         return { label: o.label, value: String(o.value), big: !!o.big, note: o.note || '' };
       });
+      // The number formatters turn a result too big, too small or impossible into "—", so that's caught here too:
+      // he gets a reason, never a blank answer.
       for (const o of out) {
-        if (/NaN|Infinity|undefined|null/.test(o.value)) R.fail("Those numbers don't give an answer. Check them.");
+        if (/—|NaN|Infinity|undefined|null/.test(o.value)) {
+          R.fail(o.label + " can't be worked out from those numbers: they're too big, too small or impossible. Check them.");
+        }
       }
       if (!out.length) R.fail('No answer for those numbers.');
       return { ok: true, out: out };

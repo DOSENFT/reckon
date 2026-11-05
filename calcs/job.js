@@ -43,6 +43,8 @@
     ],
     run: function (v) {
       if (v.rise > 50 * 12) R.fail('That rise is taller than 50 feet. Check it.', 'rise');
+      if (v.maxR < 4) R.fail('Tallest riser allowed: use at least 4". Most homes allow 7-3/4".', 'maxR');
+      if (v.tread < 4) R.fail('Tread depth: use at least 4". Most homes need 10".', 'tread');
       const n = Math.ceil(v.rise / v.maxR - 1e-9);
       const r = v.rise / n, treads = n - 1;
       const totalRun = treads * v.tread;

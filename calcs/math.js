@@ -136,17 +136,20 @@
     run: function (v) {
       const xs = v.xs.slice().sort(function (a, b) { return a - b; }), n = xs.length;
       const sum = xs.reduce(function (s, x) { return s + x; }, 0);
-      const med = n % 2 ? xs[(n - 1) / 2] : (xs[n / 2 - 1] + xs[n / 2]) / 2;
+      const med = n % 2 ? xs[(n - 1) / 2] : xs[n / 2 - 1] / 2 + xs[n / 2] / 2;   // halves first: no overflow
+      const range = xs[n - 1] - xs[0];
       const counts = new Map(); xs.forEach(function (x) { counts.set(x, (counts.get(x) || 0) + 1); });
       const top = Math.max.apply(null, Array.from(counts.values()));
       const modes = top > 1 ? Array.from(counts.keys()).filter(function (k) { return counts.get(k) === top; }) : [];
+      // a running average never overflows, even when the sum of huge numbers does
+      const mean = Number.isFinite(sum) ? sum / n : xs.reduce(function (m, x, k) { return m + (x - m) / (k + 1); }, 0);
       return [
-        { label: 'Mean (average)', value: R.fmt(sum / n, 6), big: true },
+        { label: 'Mean (average)', value: R.fmt(mean, 6), big: true },
         { label: 'Median', value: R.fmt(med, 6) },
         { label: 'Mode', value: modes.length ? modes.map(function (m) { return R.fmt(m, 6); }).join(', ') : 'None', note: modes.length ? 'appears ' + top + ' times' : 'every value appears once' },
-        { label: 'Range', value: R.fmt(xs[n - 1] - xs[0], 6) },
+        { label: 'Range', value: Number.isFinite(range) ? R.fmt(range, 6) : 'Too big to show' },
         { label: 'Count', value: n },
-        { label: 'Sum', value: R.fmt(sum, 6) },
+        { label: 'Sum', value: Number.isFinite(sum) ? R.fmt(sum, 6) : 'Too big to show', note: Number.isFinite(sum) ? '' : 'over 1.8 × 10³⁰⁸' },
         { label: 'Smallest', value: R.fmt(xs[0], 6) },
         { label: 'Largest', value: R.fmt(xs[n - 1], 6) },
       ];
@@ -165,14 +168,19 @@
     run: function (v) {
       const n = v.xs.length;
       if (n < 2) R.fail('Give at least two numbers.', 'xs');
-      const mean = v.xs.reduce(function (s, x) { return s + x; }, 0) / n;
-      const ss = v.xs.reduce(function (s, x) { return s + (x - mean) * (x - mean); }, 0);
+      // Worked on the numbers divided by the largest one, then scaled back, so squares of huge numbers never overflow.
+      const big = v.xs.reduce(function (m, x) { return Math.max(m, Math.abs(x)); }, 0) || 1;
+      const ys = v.xs.map(function (x) { return x / big; });
+      const my = ys.reduce(function (s, y) { return s + y; }, 0) / n;
+      const ssy = ys.reduce(function (s, y) { return s + (y - my) * (y - my); }, 0);
+      const mean = my * big;
+      const varOut = function (x) { return Number.isFinite(x) ? R.fmt(x, 6) : 'Too big to show'; };
       return [
-        { label: 'Sample standard deviation', value: R.fmt(Math.sqrt(ss / (n - 1)), 6), big: true, note: 'Divides by n − 1: use for a sample' },
-        { label: 'Population standard deviation', value: R.fmt(Math.sqrt(ss / n), 6) },
+        { label: 'Sample standard deviation', value: R.fmt(Math.sqrt(ssy / (n - 1)) * big, 6), big: true, note: 'Divides by n − 1: use for a sample' },
+        { label: 'Population standard deviation', value: R.fmt(Math.sqrt(ssy / n) * big, 6) },
         { label: 'Mean', value: R.fmt(mean, 6) },
-        { label: 'Sample variance', value: R.fmt(ss / (n - 1), 6) },
-        { label: 'Population variance', value: R.fmt(ss / n, 6) },
+        { label: 'Sample variance', value: varOut(ssy / (n - 1) * big * big) },
+        { label: 'Population variance', value: varOut(ssy / n * big * big) },
       ];
     },
     examples: [

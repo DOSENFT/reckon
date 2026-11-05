@@ -26,12 +26,12 @@
   }
 
   /** "7", "7.5", ".5", "7 3/8", "7-3/8", "3/8" → number, or null when it isn't one. */
-  function mixed(s) {
+  function mixed(s, label) {
     s = s.trim();
     let m;
     if ((m = s.match(/^(\d+(?:\.\d+)?|\.\d+)$/))) return +m[1];
-    if ((m = s.match(/^(\d+)(?: |\s*-\s*)(\d+)\s*\/\s*(\d+)$/))) return R._frac(+m[1], +m[2], +m[3]);
-    if ((m = s.match(/^(\d+)\s*\/\s*(\d+)$/))) return R._frac(0, +m[1], +m[2]);
+    if ((m = s.match(/^(\d+)(?: |\s*-\s*)(\d+)\s*\/\s*(\d+)$/))) return R._frac(+m[1], +m[2], +m[3], label);
+    if ((m = s.match(/^(\d+)\s*\/\s*(\d+)$/))) return R._frac(0, +m[1], +m[2], label);
     if (/^\d*\.\d+(?: |\s*-\s*)\d+\s*\/\s*\d+$/.test(s)) R.fail('Use a decimal or a fraction, not both.');
     return null;
   }
@@ -52,19 +52,19 @@
     let inches;
     const fm = s.match(/^(.*?)\s*(?:'|feet|foot|ft)(?![a-z])\s*(.*)$/);
     if (fm) {
-      const fv = mixed(fm[1]);
+      const fv = mixed(fm[1], what);
       if (fv == null) R.fail(what + ': I can\'t read "' + (fm[1] || 'nothing') + '" as feet.');
       const rest = fm[2].replace(/^-\s*/, '').trim();
       let iv = 0;
       if (rest) {
         const im = rest.match(/^(.*?)\s*(?:"|inches|inch|in)?$/);
-        iv = im ? mixed(im[1]) : null;
+        iv = im ? mixed(im[1], what) : null;
         if (iv == null) R.fail(what + ': I can\'t read "' + rest + '" as inches.');
       }
       inches = fv * 12 + iv;
     } else {
       const um = s.match(/^(.*?)\s*("|inches|inch|in|yards|yard|yds|yd|millimeters|millimetres|millimeter|millimetre|mm|centimeters|centimetres|centimeter|centimetre|cm|meters|metres|meter|metre|m)?$/);
-      const v = um ? mixed(um[1]) : null;
+      const v = um ? mixed(um[1], what) : null;
       if (v == null) R.fail(what + ': "' + String(input).trim() + '" isn\'t a length I can read. Try 5\' 7-3/8" or 2.5 m.');
       const unit = um[2] ? UNIT[um[2]] : defUnit;
       if (!IN[unit]) R.fail(what + ': unknown unit.');

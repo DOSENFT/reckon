@@ -103,7 +103,11 @@
     const h = (location.hash || '').replace(/^#\/?/, '');
     const parts = h.split('/');
     if (parts[0] === 'c' && R.getCalc(parts[1])) return { view: 'calc', calc: R.getCalc(parts[1]), face: R.getCalc(parts[1]).face };
-    if (parts[0] === 'find') return { view: 'find', face: null, q: decodeURIComponent(parts.slice(1).join('/') || '') };
+    if (parts[0] === 'find') {
+      let q = parts.slice(1).join('/') || '';
+      try { q = decodeURIComponent(q); } catch (e) { /* a broken link like #/find/% is searched as typed */ }
+      return { view: 'find', face: null, q: q.slice(0, 100) };
+    }
     const face = R.FACES.find(function (f) { return f.id === parts[0]; });
     const last = store.get('face', 'job', function (v) { return R.FACES.some(function (f) { return f.id === v; }); });
     return { view: 'face', face: face ? face.id : last };
@@ -320,7 +324,7 @@
     if (k === 'back') { if (sci.fresh) { sci.toks = []; sci.fresh = false; } else sci.toks.pop(); return updateSci(); }
     if (k === '=') {
       if (!sci.toks.length) return updateSci();
-      const text = sci.toks.join('');
+      const text = R.calcText(sci.toks);
       try {
         const v = R.evalExpr(text, { deg: sci.deg, ans: sci.ans, autoClose: true });
         sci.tape.push({ expr: text, v: v });
@@ -360,7 +364,7 @@
     });
     d.keyEls['2nd'].classList.toggle('on', sci.second);
     d.keyEls['2nd'].setAttribute('aria-pressed', sci.second ? 'true' : 'false');
-    const text = sci.toks.join('');
+    const text = R.calcText(sci.toks);
     d.expr.textContent = sci.fresh ? '' : text;
     let live = '';
     if (sci.fresh) live = typeof sci.ans === 'number' ? R.fmtCalc(sci.ans) : '0';
@@ -489,7 +493,12 @@
     main.classList.remove('fixed');
     const saved = isObj(fields[c.id]) ? fields[c.id] : null;
     const raws = {};
-    c.inputs.forEach(function (i) { raws[i.id] = saved && typeof saved[i.id] === 'string' ? saved[i.id] : (i.value != null ? String(i.value) : ''); });
+    c.inputs.forEach(function (i) {
+      let s = saved && typeof saved[i.id] === 'string' ? saved[i.id] : null;
+      // a damaged saved choice (one that's no longer on the list) falls back to the usual one, so the box and the answer agree
+      if (s != null && i.kind === 'choice' && !i.options.some(function (o) { return String(o[0]) === s; })) s = null;
+      raws[i.id] = s != null ? s : (i.value != null ? String(i.value) : '');
+    });
     let edited = !!saved;
     const star = el('button', { class: 'icon-btn', 'aria-label': 'Pin to the top of its face', 'aria-pressed': favs.indexOf(c.id) >= 0 ? 'true' : 'false', onclick: function () {
       const i = favs.indexOf(c.id);
