@@ -167,6 +167,7 @@ main.fixed .k { height: auto; }
 .k-eq { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-size: 30px; font-weight: 800; }
 [data-look="field"] .k-tri { color: #1b1e22; }
 [data-look="field"] .k-clear { color: #a3220f; }
+.k.on { outline: 3px solid var(--accent); outline-offset: -3px; }
 .k.flash { animation: flash .25s; }
 @keyframes flash { 50% { outline: 2px solid var(--danger); outline-offset: -2px; } }
 
@@ -186,6 +187,7 @@ main.fixed .k { height: auto; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 12px 14px;
   position: sticky; top: 0; z-index: 2; margin-bottom: 12px;
 }
+.result.tall { position: static; }
 .result .big-label { font-size: 12px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase; color: var(--dim); display: flex; gap: 8px; align-items: center; }
 .result .big { font: 750 36px/1.15 var(--font-num); font-variant-numeric: tabular-nums; margin: 2px 0 2px; overflow-wrap: anywhere; }
 .result .note { color: var(--dim); font-size: 13px; }

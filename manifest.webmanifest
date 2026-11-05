@@ -1,0 +1,25 @@
+{
+  "name": "Reckon",
+  "short_name": "Reckon",
+  "description": "A contractor's feet-inch calculator plus faces for money, time, travel, health, conversions and more. Works with no signal.",
+  "id": "./",
+  "start_url": "./#/job",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1b1e22",
+  "theme_color": "#1b1e22",
+  "categories": ["utilities", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Job keypad", "url": "./#/job" },
+    { "name": "Calculator", "url": "./#/calc" },
+    { "name": "Time card", "url": "./#/c/time-card" },
+    { "name": "Find a calculator", "url": "./#/find" }
+  ]
+}

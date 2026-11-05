@@ -74,7 +74,7 @@
   // ---------- settings ----------
   const LOOKS = ['night', 'day', 'field'];
   const settings = store.get('settings', {}, isObj);
-  if (LOOKS.indexOf(settings.look) < 0) settings.look = document.documentElement.dataset.look || 'night';
+  if (LOOKS.indexOf(settings.look) < 0) settings.look = document.documentElement.dataset.look || 'field';   // Field instrument: his pick, 2026-11-05
   if (R.DENS.indexOf(settings.den) < 0) settings.den = 16;
   if (typeof settings.buzz !== 'boolean') settings.buzz = true;
   function saveSettings() { store.set('settings', settings); }
@@ -144,6 +144,7 @@
     if (r.view === 'calc') drawCalc(f.main, r.calc);
     else if (r.view === 'find') drawFind(f.main, r.q);
     else if (r.face === 'job') drawJob(f.main);
+    else if (r.face === 'calc') drawSci(f.main);
     else drawList(f.main, r.face);
     drawSide(f.side);
     f.main.scrollTop = 0;
@@ -263,8 +264,136 @@
     tapKey(k);
   });
 
+  // ---------- the Calc face: everyday + scientific ----------
+  const sci = {
+    toks: [], fresh: false, second: false,
+    deg: settings.deg !== false,
+    tape: store.get('calcTape', [], Array.isArray).filter(function (t) { return isObj(t) && typeof t.expr === 'string' && Number.isFinite(t.v); }).slice(-100),
+    ans: null, msg: '', err: false,
+  };
+  if (sci.tape.length) sci.ans = sci.tape[sci.tape.length - 1].v;
+  const SCI_KEYS = [
+    [['2nd', '2nd', 'k-tri', 'Second functions'], ['sin', 'sin', 'k-tri', 'Sine'], ['cos', 'cos', 'k-tri', 'Cosine'], ['tan', 'tan', 'k-tri', 'Tangent'], ['ac', 'AC', 'k-clear', 'All clear']],
+    [['(', '(', 'k-fn', 'Open bracket'], [')', ')', 'k-fn', 'Close bracket'], ['pow', 'xʸ', 'k-fn', 'Power'], ['root', '√', 'k-fn', 'Square root'], ['/', '÷', 'k-op', 'Divide']],
+    [['7', '7'], ['8', '8'], ['9', '9'], ['pi', 'π', 'k-fn', 'Pi'], ['*', '×', 'k-op', 'Times']],
+    [['4', '4'], ['5', '5'], ['6', '6'], ['ln', 'ln', 'k-fn', 'Natural log'], ['-', '−', 'k-op', 'Minus']],
+    [['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'k-fn', 'Percent'], ['+', '+', 'k-op', 'Plus']],
+    [['0', '0'], ['.', '.', '', 'Point'], ['back', '⌫', 'k-fn', 'Back'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
+  ];
+  const SECOND = { sin: ['sin⁻¹(', 'sin⁻¹'], cos: ['cos⁻¹(', 'cos⁻¹'], tan: ['tan⁻¹(', 'tan⁻¹'], pow: ['²', 'x²'], root: ['∛(', '∛'], pi: ['e', 'e'], ln: ['log(', 'log'], '%': ['!', 'n!'] };
+  const FIRST = { sin: 'sin(', cos: 'cos(', tan: 'tan(', pow: '^', root: '√(', pi: 'π', ln: 'ln(', '%': '%', '(': '(', ')': ')', '/': '÷', '*': '×', '-': '−', '+': '+', ans: 'Ans' };
+  let sciDom = null;
+
+  function drawSci(main) {
+    main.classList.add('fixed');
+    const hist = el('div', { class: 'ro-line', style: 'direction:ltr' });
+    const mode = el('button', { class: 'chip', 'aria-label': 'Degrees or radians', onclick: function () { sci.deg = !sci.deg; settings.deg = sci.deg; saveSettings(); updateSci(); toast(sci.deg ? 'Angles in degrees' : 'Angles in radians'); } });
+    const second = el('span', { class: 'chip on', hidden: true, text: '2nd' });
+    const exprEl = el('div', { class: 'ro-line', style: 'direction:ltr;font-size:20px;color:var(--readout-text);white-space:normal;overflow-wrap:anywhere;min-height:26px' });
+    const big = el('div', { class: 'ro-main', 'aria-live': 'polite', 'aria-label': 'Answer' });
+    const msg = el('span', { class: 'ro-msg' });
+    const readout = el('section', { class: 'readout', 'aria-label': 'Readout' }, [
+      el('div', { class: 'ro-top' }, [hist, second, mode]), exprEl, big, el('div', { class: 'ro-meta' }, [msg]),
+    ]);
+    const keyEls = {};
+    const keys = el('div', { class: 'keys', role: 'group', 'aria-label': 'Keypad' });
+    SCI_KEYS.forEach(function (row) {
+      row.forEach(function (k) {
+        const b = el('button', { class: 'k ' + (k[2] || 'k-num'), 'aria-label': k[3] || k[1], 'data-key': k[0] }, [k[1]]);
+        b.addEventListener('pointerdown', function () { b.classList.add('down'); });
+        ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { b.classList.remove('down'); }); });
+        b.addEventListener('click', function () { buzz(); sciKey(k[0]); });
+        keyEls[k[0]] = b;
+        keys.append(b);
+      });
+    });
+    main.append(readout, keys);
+    sciDom = { hist: hist, mode: mode, second: second, expr: exprEl, big: big, msg: msg, keyEls: keyEls };
+    updateSci();
+  }
+
+  function sciKey(k) {
+    sci.msg = ''; sci.err = false;
+    const isDigit = /^[0-9.]$/.test(k);
+    if (k === '2nd') { sci.second = !sci.second; return updateSci(); }
+    if (k === 'ac') { sci.toks = []; sci.fresh = false; sci.second = false; return updateSci(); }
+    if (k === 'back') { if (sci.fresh) { sci.toks = []; sci.fresh = false; } else sci.toks.pop(); return updateSci(); }
+    if (k === '=') {
+      if (!sci.toks.length) return updateSci();
+      const text = sci.toks.join('');
+      try {
+        const v = R.evalExpr(text, { deg: sci.deg, ans: sci.ans, autoClose: true });
+        sci.tape.push({ expr: text, v: v });
+        if (sci.tape.length > 100) sci.tape.shift();
+        store.set('calcTape', sci.tape);
+        sci.ans = v; sci.toks = [R.fmtCalc(v).replace(/,/g, '')]; sci.fresh = true;
+        drawSide($('.side'));
+      } catch (e) {
+        if (!(e instanceof R.InputError)) throw e;
+        sci.msg = e.message; sci.err = true;
+      }
+      return updateSci();
+    }
+    if (sci.fresh) {   // after =: a digit starts over, an operation carries the answer on
+      sci.fresh = false;
+      if (isDigit || ['sin', 'cos', 'tan', 'root', 'pi', 'ln', '(', 'ans'].indexOf(k) >= 0) sci.toks = [];
+      else sci.toks = ['Ans'];
+    }
+    let tok = isDigit ? k : FIRST[k];
+    if (sci.second && SECOND[k]) tok = SECOND[k][0];
+    if (sci.second) sci.second = false;
+    if (sci.toks.length >= 120) { sci.msg = 'That’s long enough.'; sci.err = true; return updateSci(); }
+    if (tok) sci.toks.push(tok);
+    updateSci();
+  }
+
+  function updateSci() {
+    if (!sciDom || !document.body.contains(sciDom.big)) return;
+    const d = sciDom;
+    const last = sci.tape.slice(-1)[0];
+    d.hist.textContent = last ? last.expr + ' = ' + R.fmtCalc(last.v) : '';
+    d.mode.textContent = sci.deg ? 'DEG' : 'RAD';
+    d.second.hidden = !sci.second;
+    Object.keys(SECOND).forEach(function (k) {
+      const b = d.keyEls[k];
+      if (b) b.textContent = sci.second ? SECOND[k][1] : SCI_KEYS.reduce(function (a, r) { return a.concat(r); }, []).find(function (x) { return x[0] === k; })[1];
+    });
+    d.keyEls['2nd'].classList.toggle('on', sci.second);
+    d.keyEls['2nd'].setAttribute('aria-pressed', sci.second ? 'true' : 'false');
+    const text = sci.toks.join('');
+    d.expr.textContent = sci.fresh ? '' : text;
+    let live = '';
+    if (sci.fresh) live = typeof sci.ans === 'number' ? R.fmtCalc(sci.ans) : '0';
+    else if (text) { try { live = R.fmtCalc(R.evalExpr(text, { deg: sci.deg, ans: sci.ans, autoClose: true })); } catch (e) { live = ''; } }
+    d.big.textContent = live || (text ? '' : '0');
+    d.big.style.opacity = sci.fresh || !text ? '1' : '.55';
+    fit(d.big, window.innerHeight < 700 && window.innerWidth < 980 ? 38 : 46, 20);
+    d.msg.textContent = sci.msg;
+    d.msg.classList.toggle('err', sci.err);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!sciDom || !document.body.contains(sciDom.big) || document.querySelector('.sheet')) return;
+    if (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    const map = { 'Enter': '=', '=': '=', 'Backspace': 'back', 'Escape': 'ac', '^': 'pow', 'x': '*', 'p': 'pi', 's': 'sin', 'c': 'cos', 't': 'tan', 'l': 'ln', 'r': 'root' };
+    const k = /^[0-9.()+\-*/%]$/.test(e.key) ? e.key : map[e.key];
+    if (!k) return;
+    e.preventDefault();
+    sciKey(k);
+  });
+
   // ---------- tape ----------
+  function onCalcFace() { const r = route(); return r.view === 'face' && r.face === 'calc'; }
   function tapeRows(onPick) {
+    if (onCalcFace()) {
+      if (!sci.tape.length) return [el('div', { class: 'empty', text: 'Answers from the calculator land here. Tap one to use it again.' })];
+      return sci.tape.slice().reverse().map(function (t) {
+        return el('button', { class: 'tape-row', onclick: function () { sci.toks = [R.fmtCalc(t.v).replace(/,/g, '')]; sci.fresh = true; sci.ans = t.v; updateSci(); } }, [
+          el('span', { class: 't', text: t.expr }), el('span', { class: 'r', text: R.fmtCalc(t.v) }),
+        ]);
+      });
+    }
     if (!kp.tape.length) return [el('div', { class: 'empty', text: 'Answers from the Job keypad land here. Tap one to use it again.' })];
     return kp.tape.slice().reverse().map(function (t) {
       return el('button', { class: 'tape-row', onclick: function () { onPick(t); } }, [
@@ -281,7 +410,11 @@
   function openTape() {
     sheet('Tape', function (body, close) {
       const list = el('div', { class: 'tape-list' }, tapeRows(function (t) { close(); useTape(t); }));
-      const clear = el('button', { class: 'chip', onclick: function () { kp.tape = []; saveKeypad(); close(); toast('Tape cleared'); } }, ['Clear tape']);
+      list.addEventListener('click', function (e) { if (e.target.closest('.tape-row') && onCalcFace()) close(); });
+      const clear = el('button', { class: 'chip', onclick: function () {
+        if (onCalcFace()) { sci.tape = []; store.set('calcTape', []); updateSci(); } else { kp.tape = []; saveKeypad(); }
+        drawSide($('.side')); close(); toast('Tape cleared');
+      } }, ['Clear tape']);
       body.append(list);
       return [clear];
     });
@@ -393,6 +526,7 @@
         });
         return;
       }
+      result.classList.toggle('tall', r.out.length > 5);   // a long answer scrolls away instead of covering the form
       const top = r.out.find(function (o) { return o.big; }) || r.out[0];
       const label = el('div', { class: 'big-label' }, [top.label]);
       if (!edited) label.append(el('span', { class: 'example-badge', text: 'Example: change the numbers' }));
@@ -499,10 +633,13 @@
   // ---------- settings ----------
   function openSettings() {
     sheet('Settings', function (body) {
-      const looks = [['night', 'Night shift'], ['day', 'Daylight'], ['field', 'Field instrument']];
+      const looks = [['field', 'Field instrument'], ['night', 'Night shift'], ['day', 'Daylight (bright sun)']];
       const lookRow = el('div', { class: 'tools' }, looks.map(function (l) {
         return el('button', { class: 'tool' + (settings.look === l[0] ? ' more' : ''), 'aria-pressed': settings.look === l[0] ? 'true' : 'false', onclick: function () {
-          settings.look = l[0]; saveSettings(); document.documentElement.dataset.look = l[0]; closeSheets(); render();
+          settings.look = l[0]; saveSettings(); document.documentElement.dataset.look = l[0];
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', { field: '#1b1e22', night: '#0b0b0d', day: '#ece7dd' }[l[0]]);
+          closeSheets(); render();
         } }, [l[1]]);
       }));
       const denRow = el('div', { class: 'tools' }, R.DENS.map(function (d) {
@@ -514,8 +651,15 @@
     });
   }
 
+  // Keep every file on the phone so Reckon opens with no signal (not in the look previews).
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && !document.documentElement.dataset.lockLook) {
+    let had = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', function () { if (had) toast('Reckon was updated'); had = true; });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(function () { /* still works online */ });
+  }
+
   window.addEventListener('hashchange', render);
-  window.addEventListener('resize', function () { if (jobDom) updateJob(); });
+  window.addEventListener('resize', function () { if (jobDom) updateJob(); if (sciDom) updateSci(); });
   render();
   R.app = { render: render, keypad: kp, go: go };
 })(globalThis.Reckon = globalThis.Reckon || {});

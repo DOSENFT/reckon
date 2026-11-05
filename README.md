@@ -1,0 +1,63 @@
+# Reckon
+
+One calculator app for the job site and the rest of life, so you stop juggling separate calculator apps on site.
+**10 faces, 108 calculators and a scientific keypad.** It works with no signal, and nothing you type ever leaves your phone.
+
+## Put it on your phone (Pixel, about 2 minutes)
+
+1. Open Reckon's link in Chrome on the phone.
+2. Tap **⋮** (top right), then **Install app**.
+3. Tap **Install**. Reckon is now on your home screen like any app.
+
+After the first open it works in airplane mode. When a new version is out, it updates itself the next time you open it with signal ("Reckon was updated").
+
+## The faces
+
+| Face | What's in it |
+|---|---|
+| **Job** | The feet-inch keypad, plus 23 job tools: common, hip/valley and jack rafters, roof pitch, right triangle, stairs, concrete slab, footing and tube forms, studs, drywall, roofing, board feet, equal spacing, circle & arc, crown molding, polygon, paint, flooring & tile, gravel/mulch/sand, square footage, brick & block, grade & slope |
+| **Calc** | Everyday and scientific keypad: brackets, powers, roots, sin/cos/tan (degrees or radians), logs, n!, Ans, a tape |
+| **Money** | Loan, mortgage (with tax/insurance/HOA), compound interest, savings goal, tip & split, discount, sales tax, margin & markup, hourly ↔ salary, inflation, unit price, credit card payoff, simple interest, break-even, ROI |
+| **Time** | Time card (a week, overtime and pay), hours between times, add time, days between dates, add days, business days (US holidays), age, military time, decimal hours |
+| **Travel** | Trip fuel cost, gas mileage, speed/distance/time, pace, distance between GPS points, mileage pay |
+| **Convert** | Length, area, volume, weight, temperature, speed, pressure, energy, power, data, angle, fuel economy, flow, time, cooking |
+| **Health** | BMI, daily calories (BMR/TDEE), body fat (Navy tape), ideal weight, water, due date, heart rate zones, calories burned, macros |
+| **Math** | Percentage, percent change, exact fractions, ratio, mean/median/mode, standard deviation, GCF & LCM, prime factors, quadratic, rounding, percent error, scientific notation |
+| **Science** | Ohm's law, voltage drop, electricity cost, motor amps, kinetic energy, acceleration, torque & horsepower, force, ideal gas law, dilution, molar mass, battery runtime |
+| **Life** | Dog age, cat age, GPA, grade, recipe scaler, shipping (dimensional) weight, age difference |
+
+The 🔍 at the top finds any calculator by name or word ("stringer", "quikrete", "overtime"). The ☆ on a calculator pins it to the top of its face.
+
+## The Job keypad in 30 seconds
+
+- **5 Feet 7 Inch 3 a/b 8** types 5' 7-3/8". A number with no Feet or Inch is a plain number.
+- **+ − × ÷** keep track of what things are: length × length is an area, × another length is a volume. Mixing them up gets a plain warning, never a wrong number.
+- **Rise, Run, Diag, Pitch**: type a value and tap the key to store it. Tap a key with nothing typed to work it out from the last two you stored. Pitch is rise per 12 ("6" for 6/12).
+- **1/16"** (top right of the screen) sets the rounding: 1/2 down to 1/64. "≈ nearest 1/16" means an answer was rounded.
+- Under every answer: the same length in inches, feet, yards, meters, cm and mm. **M+ / MR** keep a running total. **≡** shows the tape of past answers; tap one to use it again.
+- Any measurement box in a job tool opens the same Feet / Inch keypad. **Type it** lets you type "2.5 m" instead.
+
+## How sure are the answers?
+
+Every calculator carries worked examples, calculated by hand before the code ran, and the tests check them. Every input box is also fed junk (empty, letters, negatives, 1/0, huge numbers, code) and must answer in plain words or refuse. Never NaN.
+Formulas are the standard published ones and are named on screen: IRC stair limits, the US Navy body-fat method, Mifflin–St Jeor, AVMA pet ages, NEC K-values for voltage drop, exact NIST unit factors.
+Estimates say so on screen: motor amps (use the NEC table or the nameplate to size wire), material weights, MET calories.
+
+## Safe by design
+
+- No accounts, no ads, no tracking. The code never contacts the internet, and a test fails if it ever tries.
+- Typed text is never run as code: the math reader is hand-written, with no `eval`, and the page forbids outside and inline scripts (Content Security Policy).
+- Saved values (your last inputs, tape, settings) live only in the phone's own storage and are checked when read back.
+- No third-party packages. Secret scan (gitleaks): clean.
+
+## For whoever works on it
+
+```
+node --test "tests/*.test.js"      # 261 tests: engine, every calculator, the math reader, install/offline files
+node tools/e2e.js 8840             # the real app in Edge at phone and PC size: keypads, all 108 calculators, install check, offline
+python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
+```
+
+To add a calculator: copy any `R.calc({...})` in `calcs/*.js`, give it inputs, a `run()`, and at least one example you worked out by hand. A new file also needs `python tools/sync_files.py calcs/<file>.js`.
+Plain HTML, CSS and JavaScript with no build step: `index.html` loads `engine/` (numbers, feet-inch, dates, the keypad, the math reader), then `calcs/` (one file per face), then `app.js` (the screens).
+The look is set by `data-look` on `<html>`: `field` (the default, his pick), `night` or `day`, switchable in ⚙ Settings.

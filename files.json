@@ -3,7 +3,8 @@
     "engine/core.js",
     "engine/length.js",
     "engine/keypad.js",
-    "engine/dates.js"
+    "engine/dates.js",
+    "engine/expr.js"
   ],
   "calcs": [
     "calcs/registry.js",
@@ -16,8 +17,7 @@
     "calcs/health.js",
     "calcs/math.js",
     "calcs/science.js",
-    "calcs/life.js",
-    "calcs/planned.js"
+    "calcs/life.js"
   ],
   "app": [
     "app.js"
