@@ -12,6 +12,11 @@
     "calcs/money.js",
     "calcs/time.js",
     "calcs/travel.js",
+    "calcs/convert.js",
+    "calcs/health.js",
+    "calcs/math.js",
+    "calcs/science.js",
+    "calcs/life.js",
     "calcs/planned.js"
   ],
   "app": [
