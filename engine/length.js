@@ -108,16 +108,17 @@
 
   /** Every way a length is read on site, for the conversion strip. */
   function lengthViews(inches, den) {
+    const whole = Math.abs(inches - Math.round(inches)) < 1e-9;
     return [
       ['ft-in', formatFtIn(inches, den)],
       ['inches', formatFtIn(inches, den, { inchOnly: true })],
-      ['in', R.fmt(inches, 4) + ' in'],
+      !whole && ['in', R.fmt(inches, 4) + ' in'],
       ['ft', R.fmt(inches / 12, 4) + ' ft'],
       ['yd', R.fmt(inches / 36, 4) + ' yd'],
       ['m', R.fmt(inches * 0.0254, 4) + ' m'],
       ['cm', R.fmt(inches * 2.54, 2) + ' cm'],
       ['mm', R.fmt(inches * 25.4, 1) + ' mm'],
-    ];
+    ].filter(Boolean);
   }
 
   R.parseLength = parseLength;

@@ -3,5 +3,16 @@
     "engine/core.js",
     "engine/length.js",
     "engine/keypad.js"
+  ],
+  "calcs": [
+    "calcs/registry.js",
+    "calcs/job.js",
+    "calcs/planned.js"
+  ],
+  "app": [
+    "app.js"
+  ],
+  "styles": [
+    "app.css"
   ]
 }
