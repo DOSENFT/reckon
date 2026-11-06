@@ -1,7 +1,7 @@
 # Reckon
 
 One calculator app for the job site and the rest of life, so you stop juggling separate calculator apps on site.
-**10 faces, 108 calculators and a scientific keypad.** It works with no signal, and nothing you type ever leaves your phone.
+**10 faces, 111 calculators and a calculator pad with 32 maintenance keys.** It works with no signal, and nothing you type ever leaves your phone.
 
 ## Put it on your phone (Pixel, about 2 minutes)
 
@@ -15,8 +15,8 @@ After the first open it works in airplane mode. When a new version is out, it up
 
 | Face | What's in it |
 |---|---|
-| **Job** | The feet-inch keypad, plus 23 job tools: common, hip/valley and jack rafters, roof pitch, right triangle, stairs, concrete slab, footing and tube forms, studs, drywall, roofing, board feet, equal spacing, circle & arc, crown molding, polygon, paint, flooring & tile, gravel/mulch/sand, square footage, brick & block, grade & slope |
-| **Calc** | Everyday and scientific keypad: brackets, powers, roots, sin/cos/tan (degrees or radians), logs, n!, Ans, a tape |
+| **Job** | The feet-inch keypad, plus 26 job tools: common, hip/valley and jack rafters, roof pitch, right triangle, stairs, concrete slab, footing and tube forms, studs, drywall, roofing, board feet, equal spacing, circle & arc, crown molding, polygon, paint, flooring & tile, gravel/mulch/sand, square footage, brick & block, grade & slope, 2-stroke fuel mix, tank & pool gallons, fill time |
+| **Calc** | The everyday pad (+ − × ÷, %, Ans, a tape) with four tabs of maintenance keys: **Shop**, **Electric**, **Fuel/HVAC**, **Water** (below) |
 | **Money** | Loan, mortgage (with tax/insurance/HOA), compound interest, savings goal, tip & split, discount, sales tax, margin & markup, hourly ↔ salary, inflation, unit price, credit card payoff, simple interest, break-even, ROI |
 | **Time** | Time card (a week, overtime and pay), hours between times, add time, days between dates, add days, business days (US holidays), age, military time, decimal hours |
 | **Travel** | Trip fuel cost, gas mileage, speed/distance/time, pace, distance between GPS points, mileage pay |
@@ -37,10 +37,23 @@ The 🔍 at the top finds any calculator by name or word ("stringer", "quikrete"
 - Under every answer: the same length in inches, feet, yards, meters, cm and mm. **M+ / MR** keep a running total. **≡** shows the tape of past answers; tap one to use it again.
 - Any measurement box in a job tool opens the same Feet / Inch keypad. **Type it** lets you type "2.5 m" instead.
 
+## The Calc pad's maintenance keys
+
+Type a number, tap a key: 72 then **°F→°C** reads 22.2222 with °C beside it, and the tape keeps "72 °F → 22.2222 °C". Right after =, a key works on the answer. **⇄** flips every conversion on the tab the other way round. A key with **›** opens its tool.
+
+| Tab | Keys |
+|---|---|
+| **Shop** | °F→°C, in→mm, ft→m, gal→L, psi→bar, lb→kg (each flips with ⇄), →1/16" (nearest sixteenth, as a fraction) |
+| **Electric** | W→A at 120 V and 240 V, 80% load (most continuous amps on a breaker; ⇄ gives the smallest breaker for a load, with the next standard size), HP→kW, Ohm's law ›, V drop ›, Motor A › |
+| **Fuel/HVAC** | 2-stroke oil for 50:1, 40:1 and 32:1 (gallons of gas → fl oz and mL of oil), propane gallons→lb (4.24 lb/gal), BTU→tons, BTU→kW, Any mix › |
+| **Water** | Pipe offset travel at 45°, 22½° and 60° (with the nearest 1/16"), ft³→gal, psi→feet of head (2.31 ft/psi), Tank/pool ›, Fill time › |
+
+Reckon opens on the tab you used last. A PC keyboard can still type brackets, ^ and √.
+
 ## Turn the phone sideways
 
 - **Job:** the readout on the left with your stored Rise, Run, Diag and Pitch always showing; 32 keys on the right, adding **MC** and **M−**.
-- **Calc:** 40 keys, every 2nd function on its own key (sin⁻¹, cos⁻¹, tan⁻¹, x², ∛, e, log, n!) plus **1/x**, **eˣ** and **10ˣ**.
+- **Calc:** the readout, then your maintenance keys, then the number pad, all on one screen.
 - **A calculator** shows its answer on the left and its boxes on the right. What you've typed carries over when you turn the phone.
 
 ## How sure are the answers?
@@ -59,11 +72,12 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 ## For whoever works on it
 
 ```
-node --test "tests/*.test.js"      # 273 tests: engine, every calculator, the math reader, install/offline files
-node tools/e2e.js 8840             # 115 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, all 108 calculators, broken links, install check, offline
+node --test "tests/*.test.js"      # 359 tests: engine, every calculator, the math reader, install/offline files
+node tools/e2e.js 8840             # 134 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, the maintenance keys, all 111 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
 ```
 
 To add a calculator: copy any `R.calc({...})` in `calcs/*.js`, give it inputs, a `run()`, and at least one example you worked out by hand. A new file also needs `python tools/sync_files.py calcs/<file>.js`.
+To add a maintenance key: copy any `R.quickKey({...})` in `calcs/maint.js` with a worked example, then put its id on a tab in `R.QGROUPS` (8 keys a tab; the tests check every key is on exactly one).
 Plain HTML, CSS and JavaScript with no build step: `index.html` loads `engine/` (numbers, feet-inch, dates, the keypad, the math reader), then `calcs/` (one file per face), then `app.js` (the screens).
 The look is set by `data-look` on `<html>`: `field` (the default, his pick), `night` or `day`, switchable in ⚙ Settings.

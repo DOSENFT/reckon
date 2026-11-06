@@ -6,7 +6,7 @@
 
   R.FACES = [
     { id: 'job', name: 'Job site', short: 'Job', icon: 'ruler', blurb: 'Feet-inch math, rafters, stairs, concrete, framing' },
-    { id: 'calc', name: 'Calculator', short: 'Calc', icon: 'calc', blurb: 'Everyday and scientific math with a tape' },
+    { id: 'calc', name: 'Calculator', short: 'Calc', icon: 'calc', blurb: 'Everyday math plus shop, electric, fuel and water keys' },
     { id: 'money', name: 'Money', short: 'Money', icon: 'money', blurb: 'Loans, interest, tax, tips, pay' },
     { id: 'time', name: 'Time & date', short: 'Time', icon: 'clock', blurb: 'Time cards, dates, durations, age' },
     { id: 'travel', name: 'Travel', short: 'Travel', icon: 'car', blurb: 'Fuel, mileage, speed, distance' },

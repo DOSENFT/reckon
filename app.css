@@ -171,6 +171,22 @@ main.fixed .k { height: auto; }
 .k.flash { animation: flash .25s; }
 @keyframes flash { 50% { outline: 2px solid var(--danger); outline-offset: -2px; } }
 
+/* ---- the Calc pad: four tabs of his maintenance keys over the everyday pad (calcs/maint.js) ---- */
+.qtabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); flex: none; }
+.qtab {
+  height: 36px; min-width: 0; padding: 0 4px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--surface);
+  color: var(--dim); font-weight: 750; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.qtab[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.qtab .qs { display: none; }
+.keys.qkeys, .keys.pad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+main.fixed .keys.qkeys { flex: 2 1 0; grid-template-rows: repeat(2, minmax(40px, 1fr)); max-height: 170px; }
+main.fixed .keys.pad { flex: 5 1 0; grid-template-rows: repeat(5, minmax(44px, 1fr)); max-height: 480px; }
+.k-q { font-size: 15px; font-weight: 750; line-height: 1.1; padding: 0 3px; text-align: center; overflow-wrap: anywhere; }
+.k-q.flipped { box-shadow: inset 0 -3px 0 var(--accent); }
+.k-tool { font-size: 14px; }
+.k-flip { font-size: 22px; }
+
 .tools { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: none; padding-top: 2px; }
 .tools::-webkit-scrollbar { display: none; }
 .tool {
@@ -301,10 +317,9 @@ main.fixed .k { height: auto; }
   .k-tri { font-size: 14px; }
 
   /* the keypads: 8 across, a little air between the function keys and the number pad */
-  main.fixed .keys.k8x4, main.fixed .keys.k8x5 { grid-template-columns: repeat(8, minmax(0, 1fr)); max-height: none; }
-  main.fixed .keys.k8x4 { grid-template-rows: repeat(4, minmax(0, 1fr)); }
-  main.fixed .keys.k8x5 { grid-template-rows: repeat(5, minmax(0, 1fr)); }
-  .keys.k8x4 > .k:nth-child(8n+5), .keys.k8x5 > .k:nth-child(8n+5) { margin-left: 8px; }
+  main.fixed .keys.k8x4 { grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; }
+  .keys.k8x4 > .k:nth-child(8n+5) { margin-left: 8px; }
+  .qtab { height: 32px; }
 
   /* the measuring pad pop-up: the value on the left, its keys on the right */
   .sheet:has(.keys) {
@@ -328,6 +343,11 @@ main.fixed .k { height: auto; }
   main.fixed .keys { grid-column: 2; grid-row: 1 / -1; }
   .ro-main { font-size: 40px; min-height: 46px; }
   .ro-tri { display: grid; grid-template-columns: 1fr 1fr; }
+  main.fixed.calcpad { grid-template-columns: minmax(0, 30fr) minmax(0, 26fr) minmax(0, 44fr); grid-template-rows: auto minmax(0, 1fr); row-gap: 6px; }
+  main.fixed.calcpad .readout { grid-column: 1; grid-row: 1 / -1; }
+  main.fixed.calcpad .qtabs { grid-column: 2; grid-row: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main.fixed.calcpad .keys.qkeys { grid-column: 2; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; }
+  main.fixed.calcpad .keys.pad { grid-column: 3; grid-row: 1 / -1; grid-template-rows: repeat(5, minmax(0, 1fr)); max-height: none; }
 
   /* a calculator: the answer on the left, the boxes on the right */
   main:has(> .result) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; align-items: start; align-content: start; }
@@ -349,7 +369,17 @@ main.fixed .k { height: auto; }
   .sci-ro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; row-gap: 0; }
   .sci-ro > .ro-top { display: contents; }
   .sci-ro > .ro-top > .ro-line { display: none; }
-  .sci-ro > .ro-top > .chip { grid-column: 2; grid-row: 1; }
+  main.fixed.calcpad { display: grid; grid-template-columns: minmax(0, 44fr) minmax(0, 56fr); grid-template-rows: auto auto minmax(0, 1fr); gap: 5px; }
+  main.fixed.calcpad .readout { grid-column: 1 / -1; grid-row: 1; }
+  main.fixed.calcpad .qtabs { grid-column: 1; grid-row: 2; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .qtab { font-size: 12px; padding: 0 2px; }
+  .qtab .qn { display: none; }
+  .qtab .qs { display: inline; }
+  main.fixed.calcpad .keys.qkeys { grid-column: 1; grid-row: 3; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; }
+  main.fixed.calcpad .keys.pad { grid-column: 2; grid-row: 2 / -1; grid-template-rows: repeat(5, minmax(0, 1fr)); max-height: none; }
+  .k-q { font-size: 13px; }
   .sci-ro > .ro-line { grid-column: 1; grid-row: 1; }
-  .sci-ro > .ro-main, .sci-ro > .ro-meta { grid-column: 1 / -1; }
+  .sci-ro > .ro-main { grid-column: 1 / -1; }
+  .sci-ro > .ro-meta { grid-column: 2; grid-row: 1; }   /* the unit sits beside the typing line: one shows while the other is empty */
+  .sci-ro > .ro-main { font-size: 28px; min-height: 32px; }
 }

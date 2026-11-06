@@ -56,31 +56,58 @@ async function taps(page, seq, scope = '.keys') {
       await taps(page, 'ac 6 ft rise 12 ft run diag');
       check(await page.textContent('.ro-main') === `13' 5"`, `${s.name}: Rise 6', Run 12' gives Diag 13' 5"`);
 
-      // Calc face
+      // Calc face: the everyday pad plus his maintenance keys (his picks, 2026-11-05: "I actually never use the normal
+      // extra calculator scientific tools" → Shop, Electric, Fuel/HVAC, Water, upright too)
       await page.click('.faces .face:has-text("Calc")');
-      await page.waitForSelector('.keys [data-key="sin"]');
-      await taps(page, '2 ( 3 + 4 ) pow 2 =');
-      check(await page.textContent('.ro-main') === '98', `${s.name}: Calc 2(3+4)^2 = 98`);
-      await taps(page, 'ac sin 30 ) =');
-      check(await page.textContent('.ro-main') === '0.5', `${s.name}: Calc sin(30°) = 0.5`);
+      await page.waitForSelector('.qtab');
+      check(!(await page.$('.keys [data-key="sin"], .keys [data-key="2nd"], .keys [data-key="pi"]')), `${s.name}: Calc has no scientific keys (his call)`);
+      check(JSON.stringify(await page.$$eval('.qtab', (t) => t.map((x) => x.querySelector('.qn').textContent))) === '["Shop","Electric","Fuel/HVAC","Water"]', `${s.name}: Calc's four tabs: Shop, Electric, Fuel/HVAC, Water`);
+      await taps(page, '1 2 * 3 + 4 =');
+      check(await page.textContent('.ro-main') === '40', `${s.name}: Calc 12 × 3 + 4 = 40`);
       await taps(page, 'ac 1 / 0 =');
       check(/divide by zero/.test(await page.textContent('.ro-msg')), `${s.name}: Calc 1 ÷ 0 says so in words`);
       await taps(page, 'ac 5 0 + 1 0 % =');
       check(await page.textContent('.ro-main') === '55', `${s.name}: Calc 50 + 10% = 55`);
-      // the e key (2nd π) is Euler's number: 2·e·5 = 27.18…, never read as 2×10⁵ (the independent check's find)
-      await taps(page, 'ac 2 2nd pi 5 =');
-      check(await page.textContent('.ro-main') === '27.1828182846', `${s.name}: Calc 2 e 5 = 27.1828182846 (not 200,000)`);
-      await taps(page, 'ac 2 2nd pi - 3 =');
-      check(await page.textContent('.ro-main') === '2.4365636569', `${s.name}: Calc 2 e − 3 = 2.4365636569 (not 0.002)`);
-      // the second independent check's finds: x² then a digit, a double point, Ans beside a function
-      await taps(page, 'ac 2 2nd pow 3 =');
-      check(await page.textContent('.ro-main') === '12', `${s.name}: Calc 2 x² 3 = 12 (not 8,388,608)`);
       await taps(page, 'ac 2 . . 5 =');
       check(await page.textContent('.ro-main') === '2.5', `${s.name}: Calc 2 . . 5 = 2.5 (the second point does nothing)`);
-      await taps(page, 'ac 5 = ans sin 3 0 ) =');
-      check(await page.textContent('.ro-main') === '2.5', `${s.name}: Calc 5 = Ans sin 30 = 2.5 (not "I don't know Anssin")`);
-      await taps(page, 'ac 5 0 + 1 0 % =');
+      const ro = async () => [await page.textContent('.ro-main'), await page.textContent('.ro-msg')];
+      let rv;
+      await page.click('.qtab[data-group="shop"]');
+      await taps(page, 'ac 72 q:f-to-c'); rv = await ro();
+      check(rv[0] === '22.2222' && rv[1] === '°C', `${s.name}: Shop: 72, °F→°C = 22.2222 °C (${rv})`);
+      await taps(page, 'ac 70 + 2 = q:f-to-c'); rv = await ro();
+      check(rv[0] === '22.2222', `${s.name}: Shop: right after =, °F→°C works on the answer (70 + 2)`);
+      await taps(page, '* 9 / 5 + 32 =');
+      check(await page.textContent('.ro-main') === '72', `${s.name}: Shop: math on a conversion uses its full value (22.2222… × 9 ÷ 5 + 32 = 72 exactly)`);
+      await taps(page, 'flip');
+      check(await page.textContent('.qkeys [data-key="q:c-to-f"]') === '°C→°F' && await page.getAttribute('.qkeys [data-key="flip"]', 'aria-pressed') === 'true', `${s.name}: Shop: ⇄ turns °F→°C into °C→°F`);
+      await taps(page, 'ac 100 q:c-to-f');
+      check(await page.textContent('.ro-main') === '212', `${s.name}: Shop: flipped, 100 °C→°F = 212`);
+      await taps(page, 'flip');
+      await taps(page, 'ac q:in-to-mm');
+      check(/Type a number first/.test(await page.textContent('.ro-msg')), `${s.name}: Shop: a conversion with nothing typed says so in words`);
+      await taps(page, 'ac 7 . 38 q:to-16th'); rv = await ro();
+      check(rv[0] === '7.375' && /7-3\/8"/.test(rv[1]), `${s.name}: Shop: 7.38 →1/16" = 7-3/8" (${rv})`);
+      await page.click('.qtab[data-group="elec"]');
+      await taps(page, 'ac 1500 q:w-to-a120'); rv = await ro();
+      check(rv[0] === '12.5' && /at 120 V/.test(rv[1]), `${s.name}: Electric: 1500 W→A 120 = 12.5 A (${rv})`);
+      await taps(page, 'ac 20 q:load80');
+      check(await page.textContent('.ro-main') === '16', `${s.name}: Electric: 80% load on a 20 A breaker = 16 A`);
+      await taps(page, 'flip ac 13 q:brk125 flip');
+      check(/next standard breaker: 20 A/.test(await page.textContent('.ro-msg')), `${s.name}: Electric: flipped, Min brkr for 13 A continuous says a 20 A breaker`);
+      await page.click('.qtab[data-group="fuel"]');
+      await taps(page, 'ac 2 . 5 q:mix50'); rv = await ro();
+      check(rv[0] === '6.4' && /fl oz oil/.test(rv[1]), `${s.name}: Fuel/HVAC: 2.5 gal at 50:1 = 6.4 fl oz oil (${rv})`);
+      await page.click('.qtab[data-group="water"]');
+      await taps(page, 'ac 10 q:off45'); rv = await ro();
+      check(rv[0] === '14.1421' && /14-1\/8"/.test(rv[1]), `${s.name}: Water: a 10" offset at 45° travels 14-1/8" (${rv})`);
       await page.screenshot({ path: path.join(OUT, `app-${s.name}-calc.png`) });
+      await page.click('.qkeys [data-key="t:tank-volume"]');
+      await page.waitForSelector('.result .big');
+      check(await page.textContent('.cv-head h2') === 'Tank & pool gallons' && await page.textContent('.result .big') === '470 gal', `${s.name}: Water: Tank/pool › opens Tank & pool gallons (4' round, 5' deep = 470 gal)`);
+      await page.evaluate(() => { location.hash = '#/calc'; }); await page.waitForSelector('.qtab');
+      check(await page.getAttribute('.qtab[aria-selected="true"]', 'data-group') === 'water', `${s.name}: Calc reopens on the tab he used last`);
+      await page.click('.qtab[data-group="shop"]');
 
       // every calculator opens with an answer
       const ids = await page.evaluate(() => Reckon.CALCS.map((c) => c.id));
@@ -197,13 +224,15 @@ async function taps(page, seq, scope = '.keys') {
       await taps(page, 'mc ac');
       if (w === 997) await page.screenshot({ path: path.join(OUT, `app-sideways-job.png`) });
       await page.click('.faces .face:has-text("Calc")');
-      await page.waitForSelector('.keys [data-key="inv"]');
+      await page.waitForSelector('.qtab');
       g = await onScreen(page, 'main');
-      check(g.n === 40 && g.off === 0 && g.minH >= 44, `${name}: Calc shows all 40 keys (2nd functions, 1/x, 10ˣ, eˣ), every one on screen (${JSON.stringify(g)})`);
-      check(!(await page.$('.keys [data-key="2nd"]')), `${name}: Calc needs no 2nd key sideways`);
-      for (const [seq, want] of [['ac 4 inv =', '0.25'], ['ac 2 p10 3 ) =', '2,000'], ['ac asin 1 ) =', '90'], ['ac 3 fact =', '6'], ['ac 2 sq 3 =', '12']]) {
+      check(g.n === 28 && g.off === 0 && g.minH >= 44, `${name}: Calc shows its 8 maintenance keys and 20-key pad, every one on screen (${JSON.stringify(g)})`);
+      const tabsOk = await page.evaluate(() => [...document.querySelectorAll('.qtab')].every((t) => { const r = t.getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth && r.height >= 32; }));
+      check(tabsOk, `${name}: the four tabs on screen and fingertip-tall`);
+      for (const [grp, seq, want] of [['shop', 'ac 72 q:f-to-c', '22.2222'], ['elec', 'ac 4800 q:w-to-a240', '20'], ['fuel', 'ac 36000 q:btu-to-ton', '3'], ['water', 'ac 50 q:psi-to-head', '115.5']]) {
+        await page.click(`.qtab[data-group="${grp}"]`);
         await taps(page, seq);
-        check(await page.textContent('.ro-main') === want, `${name}: Calc ${seq.replace(/^ac /, '')} → ${want}`);
+        check(await page.textContent('.ro-main') === want, `${name}: ${grp}: ${seq.slice(3)} → ${want}`);
       }
       if (w === 997) await page.screenshot({ path: path.join(OUT, `app-sideways-calc.png`) });
       await page.evaluate(() => { location.hash = '#/c/stairs'; });

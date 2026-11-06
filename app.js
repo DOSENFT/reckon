@@ -277,72 +277,95 @@
     tapKey(k);
   });
 
-  // ---------- the Calc face: everyday + scientific ----------
+  // ---------- the Calc face: the everyday pad plus his maintenance keys ----------
+  // His call (2026-11-05): "I actually never use the normal extra calculator scientific tools". The scientific keys
+  // left, upright and sideways; four tabs of maintenance keys took their place (calcs/maint.js). A quick key works on
+  // the number showing; ⇄ flips the conversions; a key with › opens its tool. Typed on a PC keyboard, the math
+  // reader still takes brackets, ^, √ and the rest.
   const sci = {
-    toks: [], fresh: false, second: false,
+    toks: [], fresh: false, flip: false,
     deg: settings.deg !== false,
+    group: R.QGROUPS.some(function (g) { return g.id === settings.qgroup; }) ? settings.qgroup : R.QGROUPS[0].id,
     tape: store.get('calcTape', [], Array.isArray).filter(function (t) { return isObj(t) && typeof t.expr === 'string' && Number.isFinite(t.v); }).slice(-100),
-    ans: null, msg: '', err: false,
+    ans: null, msg: '', err: false, shown: '',
   };
   if (sci.tape.length) sci.ans = sci.tape[sci.tape.length - 1].v;
-  const SCI_KEYS = [
-    [['2nd', '2nd', 'k-tri', 'Second functions'], ['sin', 'sin', 'k-tri', 'Sine'], ['cos', 'cos', 'k-tri', 'Cosine'], ['tan', 'tan', 'k-tri', 'Tangent'], ['ac', 'AC', 'k-clear', 'All clear']],
-    [['(', '(', 'k-fn', 'Open bracket'], [')', ')', 'k-fn', 'Close bracket'], ['pow', 'xʸ', 'k-fn', 'Power'], ['root', '√', 'k-fn', 'Square root'], ['/', '÷', 'k-op', 'Divide']],
-    [['7', '7'], ['8', '8'], ['9', '9'], ['pi', 'π', 'k-fn', 'Pi'], ['*', '×', 'k-op', 'Times']],
-    [['4', '4'], ['5', '5'], ['6', '6'], ['ln', 'ln', 'k-fn', 'Natural log'], ['-', '−', 'k-op', 'Minus']],
-    [['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'k-fn', 'Percent'], ['+', '+', 'k-op', 'Plus']],
-    [['0', '0'], ['.', '.', '', 'Point'], ['back', '⌫', 'k-fn', 'Back'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
+  const PAD = [
+    [['ac', 'AC', 'k-clear', 'All clear'], ['back', '⌫', 'k-fn', 'Back'], ['%', '%', 'k-fn', 'Percent'], ['/', '÷', 'k-op', 'Divide']],
+    [['7', '7'], ['8', '8'], ['9', '9'], ['*', '×', 'k-op', 'Times']],
+    [['4', '4'], ['5', '5'], ['6', '6'], ['-', '−', 'k-op', 'Minus']],
+    [['1', '1'], ['2', '2'], ['3', '3'], ['+', '+', 'k-op', 'Plus']],
+    [['0', '0'], ['.', '.', '', 'Point'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
   ];
-  // Held sideways: every 2nd function gets its own key, plus 1/x, eˣ and 10ˣ, like the big phone calculators.
-  // Scientific keys on the left, the everyday pad on the right; no 2nd key needed.
-  const SCI_LAND = [
-    [['(', '(', 'k-fn', 'Open bracket'], [')', ')', 'k-fn', 'Close bracket'], ['pi', 'π', 'k-fn', 'Pi'], ['e', 'e', 'k-fn', 'e, 2.71828…'], ['ac', 'AC', 'k-clear', 'All clear'], ['back', '⌫', 'k-fn', 'Back'], ['%', '%', 'k-fn', 'Percent'], ['/', '÷', 'k-op', 'Divide']],
-    [['sin', 'sin', 'k-tri', 'Sine'], ['cos', 'cos', 'k-tri', 'Cosine'], ['tan', 'tan', 'k-tri', 'Tangent'], ['pow', 'xʸ', 'k-fn', 'Power'], ['7', '7'], ['8', '8'], ['9', '9'], ['*', '×', 'k-op', 'Times']],
-    [['asin', 'sin⁻¹', 'k-tri', 'Inverse sine'], ['acos', 'cos⁻¹', 'k-tri', 'Inverse cosine'], ['atan', 'tan⁻¹', 'k-tri', 'Inverse tangent'], ['sq', 'x²', 'k-fn', 'Square'], ['4', '4'], ['5', '5'], ['6', '6'], ['-', '−', 'k-op', 'Minus']],
-    [['ln', 'ln', 'k-fn', 'Natural log'], ['log', 'log', 'k-fn', 'Log base 10'], ['root', '√', 'k-fn', 'Square root'], ['inv', '1/x', 'k-fn', 'One over'], ['1', '1'], ['2', '2'], ['3', '3'], ['+', '+', 'k-op', 'Plus']],
-    [['exp', 'eˣ', 'k-fn', 'e to the power'], ['p10', '10ˣ', 'k-fn', '10 to the power'], ['cbrt', '∛', 'k-fn', 'Cube root'], ['fact', 'n!', 'k-fn', 'Factorial'], ['0', '0'], ['.', '.', '', 'Point'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
-  ];
-  const SECOND = { sin: ['sin⁻¹(', 'sin⁻¹'], cos: ['cos⁻¹(', 'cos⁻¹'], tan: ['tan⁻¹(', 'tan⁻¹'], pow: ['²', 'x²'], root: ['∛(', '∛'], pi: ['e', 'e'], ln: ['log(', 'log'], '%': ['!', 'n!'] };
-  const FIRST = { sin: 'sin(', cos: 'cos(', tan: 'tan(', pow: '^', root: '√(', pi: 'π', ln: 'ln(', '%': '%', '(': '(', ')': ')', '/': '÷', '*': '×', '-': '−', '+': '+', ans: 'Ans',
-    e: 'e', asin: 'sin⁻¹(', acos: 'cos⁻¹(', atan: 'tan⁻¹(', sq: '²', log: 'log(', inv: '⁻¹', exp: 'e^(', p10: '10^(', cbrt: '∛(', fact: '!' };
-  // after =, these start a new line; the rest (operations, x², 1/x, n!…) carry the answer on
-  const STARTS = ['sin', 'cos', 'tan', 'root', 'pi', 'ln', '(', 'ans', 'e', 'asin', 'acos', 'atan', 'log', 'exp', 'p10', 'cbrt'];
+  // the pad's keys, then what a PC keyboard can still type
+  const FIRST = { '%': '%', '/': '÷', '*': '×', '-': '−', '+': '+', ans: 'Ans', '(': '(', ')': ')', pow: '^', root: '√(', pi: 'π', sin: 'sin(', cos: 'cos(', tan: 'tan(', ln: 'ln(' };
+  // after =, these start a new line; the rest (operations, %) carry the answer on
+  const STARTS = ['ans', '(', 'root', 'pi', 'sin', 'cos', 'tan', 'ln'];
   let sciDom = null;
 
+  function sciButton(id, label, cls, aria) {
+    const b = el('button', { class: 'k ' + cls, 'aria-label': aria, 'data-key': id }, [label]);
+    b.addEventListener('pointerdown', function () { b.classList.add('down'); });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { b.classList.remove('down'); }); });
+    b.addEventListener('click', function () { buzz(); sciKey(id); });
+    return b;
+  }
+
   function drawSci(main) {
-    main.classList.add('fixed');
+    main.classList.add('fixed', 'calcpad');
     const hist = el('div', { class: 'ro-line', style: 'direction:ltr' });
-    const mode = el('button', { class: 'chip', 'aria-label': 'Degrees or radians', onclick: function () { sci.deg = !sci.deg; settings.deg = sci.deg; saveSettings(); updateSci(); toast(sci.deg ? 'Angles in degrees' : 'Angles in radians'); } });
-    const second = el('span', { class: 'chip on', hidden: true, text: '2nd' });
     const exprEl = el('div', { class: 'ro-line', style: 'direction:ltr;font-size:20px;color:var(--readout-text);white-space:normal;overflow-wrap:anywhere;min-height:26px' });
     const big = el('div', { class: 'ro-main', 'aria-live': 'polite', 'aria-label': 'Answer' });
     const msg = el('span', { class: 'ro-msg' });
     const readout = el('section', { class: 'readout sci-ro', 'aria-label': 'Readout' }, [
-      el('div', { class: 'ro-top' }, [hist, second, mode]), exprEl, big, el('div', { class: 'ro-meta' }, [msg]),
+      el('div', { class: 'ro-top' }, [hist]), exprEl, big, el('div', { class: 'ro-meta' }, [msg]),
     ]);
+    const tabs = el('div', { class: 'qtabs', role: 'tablist', 'aria-label': 'Maintenance keys' }, R.QGROUPS.map(function (g) {
+      return el('button', { class: 'qtab', role: 'tab', 'data-group': g.id, onclick: function () {
+        buzz(); sci.group = g.id; sci.flip = false; settings.qgroup = g.id; saveSettings(); drawQuick();
+      }, 'aria-label': g.name }, [el('span', { class: 'qn', text: g.name }), el('span', { class: 'qs', text: g.short || g.name })]);
+    }));
+    const qkeys = el('div', { class: 'keys qkeys', role: 'tabpanel', 'aria-label': 'Maintenance keys' });
+    const pad = el('div', { class: 'keys pad', role: 'group', 'aria-label': 'Keypad' });
     const keyEls = {};
-    if (LAND.matches) sci.second = false;
-    const keys = el('div', { class: 'keys' + (LAND.matches ? ' k8x5' : ''), role: 'group', 'aria-label': 'Keypad' });
-    (LAND.matches ? SCI_LAND : SCI_KEYS).forEach(function (row) {
-      row.forEach(function (k) {
-        const b = el('button', { class: 'k ' + (k[2] || 'k-num'), 'aria-label': k[3] || k[1], 'data-key': k[0] }, [k[1]]);
-        b.addEventListener('pointerdown', function () { b.classList.add('down'); });
-        ['pointerup', 'pointerleave', 'pointercancel'].forEach(function (ev) { b.addEventListener(ev, function () { b.classList.remove('down'); }); });
-        b.addEventListener('click', function () { buzz(); sciKey(k[0]); });
-        keyEls[k[0]] = b;
-        keys.append(b);
-      });
+    PAD.forEach(function (row) {
+      row.forEach(function (k) { keyEls[k[0]] = sciButton(k[0], k[1], k[2] || 'k-num', k[3] || k[1]); pad.append(keyEls[k[0]]); });
     });
-    main.append(readout, keys);
-    sciDom = { hist: hist, mode: mode, second: second, expr: exprEl, big: big, msg: msg, keyEls: keyEls };
+    main.append(readout, tabs, qkeys, pad);
+    sciDom = { hist: hist, expr: exprEl, big: big, msg: msg, keyEls: keyEls, tabs: tabs, qkeys: qkeys };
+    drawQuick();
     updateSci();
   }
 
+  /** The open tab's 8 keys. A conversion pair shows its other way round while ⇄ is on. */
+  function drawQuick() {
+    const d = sciDom;
+    if (!d) return;
+    const g = R.QGROUPS.find(function (x) { return x.id === sci.group; }) || R.QGROUPS[0];
+    d.tabs.querySelectorAll('.qtab').forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-group') === g.id ? 'true' : 'false'); });
+    d.qkeys.textContent = '';
+    g.slots.forEach(function (s) {
+      let b;
+      if (s === 'flip') {
+        b = sciButton('flip', '⇄', 'k-fn k-flip', 'Flip the conversions the other way round');
+        b.classList.toggle('on', sci.flip);
+        b.setAttribute('aria-pressed', sci.flip ? 'true' : 'false');
+      } else if (typeof s === 'string' && s.indexOf('t:') === 0) {
+        const c = R.getCalc(s.slice(2));
+        b = sciButton(s, R.QTOOL[c.id] + ' ›', 'k-q k-tool', 'Open ' + c.name);
+      } else {
+        const q = R.getQuick(Array.isArray(s) ? s[sci.flip ? 1 : 0] : s);
+        b = sciButton('q:' + q.id, q.key, 'k-tri k-q' + (Array.isArray(s) && sci.flip ? ' flipped' : ''), q.name);
+      }
+      d.qkeys.append(b);
+    });
+  }
+
   function sciKey(k) {
-    sci.msg = ''; sci.err = false;
+    if (k === 'flip') { sci.flip = !sci.flip; drawQuick(); return updateSci(); }   // the readout and its unit stay as they are
+    sci.msg = ''; sci.err = false; sci.shown = '';
     const isDigit = /^[0-9.]$/.test(k);
-    if (k === '2nd') { sci.second = !sci.second; return updateSci(); }
-    if (k === 'ac') { sci.toks = []; sci.fresh = false; sci.second = false; return updateSci(); }
+    if (k === 'ac') { sci.toks = []; sci.fresh = false; return updateSci(); }
     if (k === 'back') { if (sci.fresh) { sci.toks = []; sci.fresh = false; } else sci.toks.pop(); return updateSci(); }
     if (k === '=') {
       if (!sci.toks.length) return updateSci();
@@ -360,17 +383,38 @@
       }
       return updateSci();
     }
+    if (k.indexOf('q:') === 0) return quickKey(k.slice(2));                        // works on the number showing
+    if (k.indexOf('t:') === 0) { if (R.getCalc(k.slice(2))) go('#/c/' + k.slice(2)); return; }   // opens its tool
     if (sci.fresh) {   // after =: a digit starts over, an operation carries the answer on
       sci.fresh = false;
       if (isDigit || STARTS.indexOf(k) >= 0) sci.toks = [];
       else sci.toks = ['Ans'];
     }
-    let tok = isDigit ? k : FIRST[k];
-    if (sci.second && SECOND[k]) tok = SECOND[k][0];
-    if (sci.second) sci.second = false;
+    const tok = isDigit ? k : FIRST[k];
     if (sci.toks.length >= 120) { sci.msg = 'That’s long enough.'; sci.err = true; return updateSci(); }
     if (tok === '.' && R.hasPoint(sci.toks)) return updateSci();   // one point per number: a second tap does nothing, like a phone calculator
     if (tok) sci.toks.push(tok);
+    updateSci();
+  }
+
+  /** A quick key (°F→°C, watts → amps…): it works on the number showing, or on the last answer just after =. */
+  function quickKey(id) {
+    const def = R.getQuick(id);
+    try {
+      if (!def) R.fail('That key isn’t known.');
+      if (!sci.fresh && !sci.toks.length) R.fail('Type a number first, then tap ' + def.key + '.');
+      const x = sci.fresh ? sci.ans : R.evalExpr(R.calcText(sci.toks), { deg: sci.deg, ans: sci.ans, autoClose: true });
+      const r = R.applyQuick(id, x);
+      sci.tape.push({ expr: r.line, v: r.v, q: true });
+      if (sci.tape.length > 100) sci.tape.shift();
+      store.set('calcTape', sci.tape);
+      sci.ans = r.v; sci.toks = [r.shown.replace(/,/g, '')]; sci.fresh = true; sci.shown = r.shown;
+      sci.msg = r.unit + (r.note ? (r.unit ? ' · ' : '') + r.note : '');
+      drawSide($('.side'));
+    } catch (e) {
+      if (!(e instanceof R.InputError)) throw e;
+      sci.msg = e.message; sci.err = true;
+    }
     updateSci();
   }
 
@@ -378,21 +422,11 @@
     if (!sciDom || !document.body.contains(sciDom.big)) return;
     const d = sciDom;
     const last = sci.tape.slice(-1)[0];
-    d.hist.textContent = last ? last.expr + ' = ' + R.fmtCalc(last.v) : '';
-    d.mode.textContent = sci.deg ? 'DEG' : 'RAD';
-    d.second.hidden = !sci.second;
-    Object.keys(SECOND).forEach(function (k) {
-      const b = d.keyEls[k];
-      if (b) b.textContent = sci.second ? SECOND[k][1] : SCI_KEYS.reduce(function (a, r) { return a.concat(r); }, []).find(function (x) { return x[0] === k; })[1];
-    });
-    if (d.keyEls['2nd']) {   // the upright pad only: sideways every function has its own key
-      d.keyEls['2nd'].classList.toggle('on', sci.second);
-      d.keyEls['2nd'].setAttribute('aria-pressed', sci.second ? 'true' : 'false');
-    }
+    d.hist.textContent = last ? (last.q ? last.expr : last.expr + ' = ' + R.fmtCalc(last.v)) : '';   // a quick key's line already says where it landed
     const text = R.calcText(sci.toks);
     d.expr.textContent = sci.fresh ? '' : text;
     let live = '';
-    if (sci.fresh) live = typeof sci.ans === 'number' ? R.fmtCalc(sci.ans) : '0';
+    if (sci.fresh) live = sci.shown || (typeof sci.ans === 'number' ? R.fmtCalc(sci.ans) : '0');
     else if (text) { try { live = R.fmtCalc(R.evalExpr(text, { deg: sci.deg, ans: sci.ans, autoClose: true })); } catch (e) { live = ''; } }
     d.big.textContent = live || (text ? '' : '0');
     d.big.style.opacity = sci.fresh || !text ? '1' : '.55';
@@ -418,7 +452,7 @@
     if (onCalcFace()) {
       if (!sci.tape.length) return [el('div', { class: 'empty', text: 'Answers from the calculator land here. Tap one to use it again.' })];
       return sci.tape.slice().reverse().map(function (t) {
-        return el('button', { class: 'tape-row', onclick: function () { sci.toks = [R.fmtCalc(t.v).replace(/,/g, '')]; sci.fresh = true; sci.ans = t.v; updateSci(); } }, [
+        return el('button', { class: 'tape-row', onclick: function () { sci.toks = [R.fmtCalc(t.v).replace(/,/g, '')]; sci.fresh = true; sci.ans = t.v; sci.shown = ''; updateSci(); } }, [
           el('span', { class: 't', text: t.expr }), el('span', { class: 'r', text: R.fmtCalc(t.v) }),
         ]);
       });
@@ -695,7 +729,7 @@
   window.addEventListener('hashchange', render);
   // turning the phone redraws a keypad face with its sideways or upright keys; what's typed stays (it lives in kp and sci)
   const turned = function () {
-    sci.second = false;
+    sci.flip = false;
     const r = route();
     if (r.view === 'face' && (r.face === 'job' || r.face === 'calc')) render();
   };
