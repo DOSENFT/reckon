@@ -17,6 +17,8 @@
   --unit-key: #1f1813; --unit-line: #4a3222; --tri-key: #141417; --op-key: #202026;
   --readout: #101013; --readout-text: #ffffff; --readout-line: #24242a;
   --radius: 5px; --radius-lg: 8px;
+  --q-key: #0f0f12; --q-line: #3a3a43; --q-text: #ecdfc4; --q-press: #1c1c21; --q-shadow: none;
+  --erase-key: #2a1712; --erase-line: #5a2c20; --erase-text: #ff8a75;
 }
 
 /* ---- Look B: Daylight (bone paper, blueprint ink, readable in sun) ---- */
@@ -30,6 +32,8 @@
   --unit-key: #e8eef7; --unit-line: #9fb3d1; --tri-key: #f4f0e8; --op-key: #ebe6db;
   --readout: #f7f5ef; --readout-text: #0f1824; --readout-line: #d7dde6;
   --radius: 4px; --radius-lg: 6px;
+  --q-key: #2f3a48; --q-line: #1e2733; --q-text: #f6f1e6; --q-press: #253040; --q-shadow: 0 2px 0 #1e2733;
+  --erase-key: #f7ddd3; --erase-line: #d9a593; --erase-text: #9c1f12;
 }
 [data-look="day"] .readout {
   background-color: var(--readout);
@@ -49,6 +53,8 @@
   --unit-key: #2f7f72; --unit-line: #23675c; --tri-key: #c9cfd4; --op-key: #3d434b;
   --readout: #b8c39f; --readout-text: #18200f; --readout-line: #a2ad89;
   --radius: 10px; --radius-lg: 14px;
+  --q-key: #2a2f35; --q-line: #4a525c; --q-text: #efe7d2; --q-press: #22262b; --q-shadow: 0 3px 0 #131619;
+  --erase-key: #f1d5c9; --erase-line: #c9a090; --erase-text: #8f1d0b;
 }
 [data-look="field"] .readout { box-shadow: inset 0 2px 6px rgba(0, 0, 0, .35); border-color: #8d977a; }
 [data-look="field"] .readout, [data-look="field"] .readout * { color: var(--readout-text); }
@@ -180,12 +186,21 @@ main.fixed .k { height: auto; }
 .qtab[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .qtab .qs { display: none; }
 .keys.qkeys, .keys.pad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-main.fixed .keys.qkeys { flex: 2 1 0; grid-template-rows: repeat(2, minmax(40px, 1fr)); max-height: 170px; }
-main.fixed .keys.pad { flex: 5 1 0; grid-template-rows: repeat(5, minmax(44px, 1fr)); max-height: 480px; }
-.k-q { font-size: 15px; font-weight: 750; line-height: 1.1; padding: 0 3px; text-align: center; overflow-wrap: anywhere; }
-.k-q.flipped { box-shadow: inset 0 -3px 0 var(--accent); }
-.k-tool { font-size: 14px; }
-.k-flip { font-size: 22px; }
+main.fixed .keys.qkeys { flex: none; grid-template-rows: repeat(2, 46px); max-height: none; margin-bottom: 6px; }
+main.fixed .keys.pad { flex: 1 1 0; grid-template-rows: repeat(5, minmax(44px, 1fr)); max-height: 520px; }
+/* his note (2026-11-06): "make the specialty buttons smaller and different colored. Possible darker with white or cream letters" */
+.qkeys .k, .qkeys .k.k-tri, .qkeys .k.k-fn {
+  background: var(--q-key); border-color: var(--q-line); color: var(--q-text); box-shadow: var(--q-shadow);
+  font-size: 14px; font-weight: 700; line-height: 1.1; padding: 0 3px; text-align: center; overflow-wrap: anywhere;
+}
+.qkeys .k:active, .qkeys .k.down { background: var(--q-press); box-shadow: none; }
+.qkeys .k.flipped { box-shadow: inset 0 -3px 0 var(--accent); }
+.qkeys .k.k-flip { font-size: 24px; }
+.qkeys .k-flip.on { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* AC and ⌫: the erase keys, tinted so they never blend into the keys around them (his note: "no way for me to backspace or clear") */
+.pad .k[data-key="ac"], .pad .k[data-key="back"] { background: var(--erase-key); border-color: var(--erase-line); color: var(--erase-text); font-weight: 800; }
+.pad .k[data-key="back"] { font-size: 24px; }
+[data-look="field"] .pad .k[data-key="ac"], [data-look="field"] .pad .k[data-key="back"] { box-shadow: 0 3px 0 #a9806f; color: var(--erase-text); }
 
 .tools { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: none; padding-top: 2px; }
 .tools::-webkit-scrollbar { display: none; }
@@ -343,10 +358,10 @@ main.fixed .keys.pad { flex: 5 1 0; grid-template-rows: repeat(5, minmax(44px, 1
   main.fixed .keys { grid-column: 2; grid-row: 1 / -1; }
   .ro-main { font-size: 40px; min-height: 46px; }
   .ro-tri { display: grid; grid-template-columns: 1fr 1fr; }
-  main.fixed.calcpad { grid-template-columns: minmax(0, 30fr) minmax(0, 26fr) minmax(0, 44fr); grid-template-rows: auto minmax(0, 1fr); row-gap: 6px; }
+  main.fixed.calcpad { grid-template-columns: minmax(0, 31fr) minmax(0, 23fr) minmax(0, 46fr); grid-template-rows: auto minmax(0, 1fr); row-gap: 6px; }
   main.fixed.calcpad .readout { grid-column: 1; grid-row: 1 / -1; }
   main.fixed.calcpad .qtabs { grid-column: 2; grid-row: 1; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  main.fixed.calcpad .keys.qkeys { grid-column: 2; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; }
+  main.fixed.calcpad .keys.qkeys { grid-column: 2; grid-row: 2; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; margin-bottom: 0; }
   main.fixed.calcpad .keys.pad { grid-column: 3; grid-row: 1 / -1; grid-template-rows: repeat(5, minmax(0, 1fr)); max-height: none; }
 
   /* a calculator: the answer on the left, the boxes on the right */
@@ -375,9 +390,9 @@ main.fixed .keys.pad { flex: 5 1 0; grid-template-rows: repeat(5, minmax(44px, 1
   .qtab { font-size: 12px; padding: 0 2px; }
   .qtab .qn { display: none; }
   .qtab .qs { display: inline; }
-  main.fixed.calcpad .keys.qkeys { grid-column: 1; grid-row: 3; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; }
+  main.fixed.calcpad .keys.qkeys { grid-column: 1; grid-row: 3; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); max-height: none; margin-bottom: 0; }
   main.fixed.calcpad .keys.pad { grid-column: 2; grid-row: 2 / -1; grid-template-rows: repeat(5, minmax(0, 1fr)); max-height: none; }
-  .k-q { font-size: 13px; }
+  .qkeys .k, .qkeys .k.k-tri, .qkeys .k.k-fn { font-size: 13px; }
   .sci-ro > .ro-line { grid-column: 1; grid-row: 1; }
   .sci-ro > .ro-main { grid-column: 1 / -1; }
   .sci-ro > .ro-meta { grid-column: 2; grid-row: 1; }   /* the unit sits beside the typing line: one shows while the other is empty */

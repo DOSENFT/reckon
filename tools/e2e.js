@@ -61,6 +61,20 @@ async function taps(page, seq, scope = '.keys') {
       await page.click('.faces .face:has-text("Calc")');
       await page.waitForSelector('.qtab');
       check(!(await page.$('.keys [data-key="sin"], .keys [data-key="2nd"], .keys [data-key="pi"]')), `${s.name}: Calc has no scientific keys (his call)`);
+      // his note (2026-11-06): "there's no way for me to backspace or clear" (AC and ⌫ blended into the keys above them)
+      // and "make the specialty buttons smaller and different colored. Possible darker with white or cream letters"
+      const look = await page.evaluate(() => {
+        const lum = (c) => { const m = c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]; };
+        const st = (sel) => { const e = document.querySelector(sel); const s = getComputedStyle(e); const r = e.getBoundingClientRect(); return { bg: s.backgroundColor, fg: s.color, h: r.height, top: r.top, bottom: r.bottom }; };
+        const q = st('.qkeys .k'), tool = st('.qkeys .k-flip'), ac = st('.pad [data-key="ac"]'), back = st('.pad [data-key="back"]'), num = st('.pad [data-key="7"]');
+        const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+        return { q, tool, ac, back, num, qDarker: lum(q.bg) < lum(num.bg), qContrast: ratio(q.fg, q.bg), acContrast: ratio(ac.fg, ac.bg), screenH: innerHeight };
+      });
+      check(look.ac.bg === look.back.bg && look.ac.bg !== look.num.bg && look.ac.bg !== look.q.bg && look.ac.bottom <= look.screenH && look.back.bottom <= look.screenH,
+        `${s.name}: AC and ⌫ have their own erase color, on screen (${look.ac.bg})`);
+      check(look.qDarker && look.q.bg === look.tool.bg && look.qContrast >= 4.5 && look.acContrast >= 4.5,
+        `${s.name}: the specialty keys are darker than the number keys with readable cream letters (${look.qContrast.toFixed(1)}:1)`);
+      check(look.q.h >= 44 && look.q.h < look.num.h, `${s.name}: the specialty keys are shorter than the number keys and still fingertip-tall (${Math.round(look.q.h)} vs ${Math.round(look.num.h)} px)`);
       check(JSON.stringify(await page.$$eval('.qtab', (t) => t.map((x) => x.querySelector('.qn').textContent))) === '["Shop","Electric","Fuel/HVAC","Water"]', `${s.name}: Calc's four tabs: Shop, Electric, Fuel/HVAC, Water`);
       await taps(page, '1 2 * 3 + 4 =');
       check(await page.textContent('.ro-main') === '40', `${s.name}: Calc 12 × 3 + 4 = 40`);

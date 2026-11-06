@@ -73,7 +73,7 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 
 ```
 node --test "tests/*.test.js"      # 359 tests: engine, every calculator, the math reader, install/offline files
-node tools/e2e.js 8840             # 134 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, the maintenance keys, all 111 calculators, broken links, install check, offline
+node tools/e2e.js 8840             # 140 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, the maintenance keys, all 111 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
 ```
 
