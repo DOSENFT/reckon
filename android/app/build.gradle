@@ -1,0 +1,46 @@
+// Reckon as a real Android app: the same web files, packed inside, shown in a WebView.
+// Build it with `python tools/build_android.py` (copies the files in, sets the version, signs).
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.dosenft.reckon'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.dosenft.reckon'
+        minSdk 30
+        targetSdk 35
+        versionCode((project.findProperty('reckonVersionCode') ?: '1') as int)
+        versionName(project.findProperty('reckonVersionName') ?: 'dev')
+    }
+
+    signingConfigs {
+        // Like Rocky's app: a release build (not debuggable, so GrapheneOS shows no debug notice)
+        // signed with this PC's standard debug key, so it installs and updates over ADB.
+        daily {
+            storeFile file("${System.properties['user.home']}/.android/debug.keystore")
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.daily
+        }
+    }
+
+    lint {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

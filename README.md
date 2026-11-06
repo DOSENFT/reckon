@@ -3,13 +3,16 @@
 One calculator app for the job site and the rest of life, so you stop juggling separate calculator apps on site.
 **10 faces, 111 calculators and a calculator pad with 32 maintenance keys.** It works with no signal, and nothing you type ever leaves your phone.
 
-## Put it on your phone (Pixel, about 2 minutes)
+## Put it on your phone (about 2 minutes)
 
-1. Open Reckon's link in Chrome on the phone.
-2. Tap **⋮** (top right), then **Install app**.
-3. Tap **Install**. Reckon is now on your home screen like any app.
+**As a real Android app** (any Android 11+, including GrapheneOS, whose Vanadium browser can't install web apps):
+`python tools/build_android.py` makes `dist/Reckon.apk` (about 120 KB, with every file inside). Install it with
+`python tools/build_android.py --install` over ADB, or open the file on the phone and tap **Install**. The app has no
+internet permission at all, so it works in airplane mode from the first open, and Android lists it as a calculator app.
 
-After the first open it works in airplane mode. When a new version is out, it updates itself the next time you open it with signal ("Reckon was updated").
+**As a web app** (Chrome on Android): open https://dosenft.github.io/reckon/, tap **⋮** (top right), then
+**Install app**, then **Install**. After the first open it works in airplane mode, and it updates itself the next time
+you open it with signal ("Reckon was updated").
 
 ## The faces
 
@@ -72,10 +75,14 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 ## For whoever works on it
 
 ```
-node --test "tests/*.test.js"      # 359 tests: engine, every calculator, the math reader, install/offline files
+node --test "tests/*.test.js"      # 365 tests: engine, every calculator, the math reader, install/offline files, the Android app's promises
 node tools/e2e.js 8840             # 140 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, the maintenance keys, all 111 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
+python tools/build_android.py      # then rebuild the Android app (dist/Reckon.apk) so it carries the same files
 ```
+
+The Android app (`android/`) is one WebView showing the packed files at a private https address only the app answers.
+It needs this PC's Android kit in `C:\Android` (Java 17, SDK, Gradle), the same one Rocky's app builds with.
 
 To add a calculator: copy any `R.calc({...})` in `calcs/*.js`, give it inputs, a `run()`, and at least one example you worked out by hand. A new file also needs `python tools/sync_files.py calcs/<file>.js`.
 To add a maintenance key: copy any `R.quickKey({...})` in `calcs/maint.js` with a worked example, then put its id on a tab in `R.QGROUPS` (8 keys a tab; the tests check every key is on exactly one).

@@ -3,3 +3,10 @@
 .env.*
 shots/
 *.log
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/
+dist/
+tools/__pycache__/
