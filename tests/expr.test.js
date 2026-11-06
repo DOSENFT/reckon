@@ -20,6 +20,45 @@ test('the Calc keypad\'s e key is Euler\'s number, never "times ten to the"', ()
   assert.equal(R.calcText(null), '');
 });
 
+// The second independent check's finds (2026-11-05): each gave a wrong number or a word he never typed.
+test('x² and x³ belong to their own number: 2²3 is 4 × 3, never 2^23', () => {
+  assert.equal(ev('2²3'), 12);                 // was 8,388,608
+  assert.equal(ev('3²2'), 18);                 // was 31,381,059,609
+  assert.equal(ev('2².5'), 2);                 // was 5.657
+  assert.equal(ev('2³'), 8);
+  assert.equal(ev('(1+2)²'), 9);
+  assert.equal(ev('-2²'), -4);                 // like -2^2
+  assert.equal(ev('2²^3'), 64);                // (2²)³: the square happens first
+  assert.throws(() => ev('²'), /missing before "²"/);
+});
+
+test('a second decimal point is refused in words, and the keypad never types one', () => {
+  for (const s of ['2..5', '2.5.3', '1e5.5']) assert.throws(() => ev(s), /two decimal points/, s);   // were 1, 0.75, …
+  assert.equal(R.hasPoint(['2', '.', '5']), true);
+  assert.equal(R.hasPoint(['2', '.']), true);
+  assert.equal(R.hasPoint(['2', '+', '3']), false);
+  assert.equal(R.hasPoint(['2', '.', '5', '+', '1']), false);   // a new number may have its own point
+  assert.equal(R.hasPoint(['2.5']), true);
+  assert.equal(R.hasPoint(['e']), false);
+  assert.equal(R.hasPoint(null), false);
+});
+
+test('Ans beside a function or another Ans is multiplied, never "I don\'t know Anssin"', () => {
+  const keys = (...k) => R.calcText(k);
+  near(ev(keys('Ans', 'sin(', '30', ')'), { ans: 5, deg: true }), 2.5);
+  near(ev(keys('Ans', 'ln(', 'e', ')'), { ans: 4 }), 4);
+  near(ev(keys('Ans', 'log(', '100', ')'), { ans: 3 }), 6);
+  near(ev(keys('Ans', 'sin⁻¹(', '1', ')'), { ans: 2, deg: true }), 180);
+  assert.equal(ev(keys('Ans', 'Ans'), { ans: 3 }), 9);
+  assert.equal(ev(keys('Ans', '2'), { ans: 3 }), 6);
+  assert.equal(keys('Ans', 'sin(', '30', ')'), 'Ans⋅sin(30)');
+});
+
+test('messages use the names on the keys', () => {
+  assert.throws(() => ev('sin⁻¹(2)'), /: sin⁻¹ only takes/);
+  assert.throws(() => ev('cos⁻¹(2)'), /cos⁻¹ only takes/);
+});
+
 test('order of operations and brackets', () => {
   assert.equal(ev('2 + 3 * 4'), 14);
   assert.equal(ev('(2 + 3) * 4'), 20);

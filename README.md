@@ -53,8 +53,8 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 ## For whoever works on it
 
 ```
-node --test "tests/*.test.js"      # 268 tests: engine, every calculator, the math reader, install/offline files
-node tools/e2e.js 8840             # 55 checks: the real app in Edge at phone and PC size: keypads, all 108 calculators, broken links, install check, offline
+node --test "tests/*.test.js"      # 272 tests: engine, every calculator, the math reader, install/offline files
+node tools/e2e.js 8840             # 61 checks: the real app in Edge at phone and PC size: keypads, all 108 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
 ```
 

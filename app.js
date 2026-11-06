@@ -347,6 +347,7 @@
     if (sci.second && SECOND[k]) tok = SECOND[k][0];
     if (sci.second) sci.second = false;
     if (sci.toks.length >= 120) { sci.msg = 'That’s long enough.'; sci.err = true; return updateSci(); }
+    if (tok === '.' && R.hasPoint(sci.toks)) return updateSci();   // one point per number: a second tap does nothing, like a phone calculator
     if (tok) sci.toks.push(tok);
     updateSci();
   }

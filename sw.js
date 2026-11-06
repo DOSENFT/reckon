@@ -1,7 +1,7 @@
 /* Reckon's service worker: made by tools/build_sw.py, don't edit by hand.
    Keeps every file Reckon needs on the phone so it opens with no signal. */
 'use strict';
-const VERSION = 'c05f35ba70db';
+const VERSION = 'a489afea26cd';
 const CACHE = 'reckon-' + VERSION;
 const FILES = [
   "./",

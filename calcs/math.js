@@ -119,13 +119,13 @@
     inputs: [NUM('a', 'A', '3'), NUM('b', 'B', '4'), NUM('c', 'C', '9')],
     run: function (v) {
       if (v.a === 0) R.fail('A can’t be zero.', 'a');
-      const out = [{ label: '?', value: R.fmt(v.b * v.c / v.a, 6), big: true, note: R.fmt(v.a, 6) + ' : ' + R.fmt(v.b, 6) + ' = ' + R.fmt(v.c, 6) + ' : ?' }];
+      const out = [{ label: 'Missing number (?)', value: R.fmt(v.b * v.c / v.a, 6), big: true, note: R.fmt(v.a, 6) + ' : ' + R.fmt(v.b, 6) + ' = ' + R.fmt(v.c, 6) + ' : ?' }];
       if (Number.isInteger(v.a) && Number.isInteger(v.b) && v.b !== 0) { const g = gcd(v.a, v.b); out.push({ label: 'A : B simplified', value: (v.a / g) + ' : ' + (v.b / g) }); }
       return out;
     },
     examples: [
-      { in: {}, out: { '?': '12', 'A : B simplified': '3 : 4' } },
-      { in: { a: '1920', b: '1080', c: '1280' }, out: { '?': '720', 'A : B simplified': '16 : 9' } },
+      { in: {}, out: { 'Missing number (?)': '12', 'A : B simplified': '3 : 4' } },
+      { in: { a: '1920', b: '1080', c: '1280' }, out: { 'Missing number (?)': '720', 'A : B simplified': '16 : 9' } },
     ],
   });
 

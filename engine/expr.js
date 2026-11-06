@@ -4,6 +4,7 @@
    (50 + 10% = 55), degrees or radians, and plain-words errors. */
 (function (R) {
   'use strict';
+  const NAME = { asin: 'sin⁻¹', acos: 'cos⁻¹', atan: 'tan⁻¹', sqrt: '√', cbrt: '∛' };   // the names on the keys
   const FUNCS = {
     sin: 1, cos: 1, tan: 1, asin: 1, acos: 1, atan: 1, sqrt: 1, cbrt: 1, ln: 1, log: 1, abs: 1,
   };
@@ -12,16 +13,19 @@
     const s = String(src == null ? '' : src)
       .replace(/[×∙⋅]/g, '*').replace(/÷/g, '/').replace(/[−–]/g, '-')
       .replace(/π/g, ' pi ').replace(/√/g, ' sqrt ').replace(/∛/g, ' cbrt ')
-      .replace(/sin⁻¹/g, 'asin').replace(/cos⁻¹/g, 'acos').replace(/tan⁻¹/g, 'atan')
-      .replace(/²/g, '^2').replace(/³/g, '^3');
+      .replace(/sin⁻¹/g, 'asin').replace(/cos⁻¹/g, 'acos').replace(/tan⁻¹/g, 'atan');
     if (s.length > 500) R.fail('That expression is too long.');
     const out = [];
     let i = 0;
     while (i < s.length) {
       const c = s[i];
       if (/\s/.test(c)) { i++; continue; }
+      if (c === '²' || c === '³') { out.push({ t: 'pw', v: c === '²' ? 2 : 3 }); i++; continue; }   // x² binds to its own number: 2²3 is 4 × 3
       let m = s.slice(i).match(/^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i);
-      if (m) { out.push({ t: 'n', v: parseFloat(m[0]) }); i += m[0].length; continue; }
+      if (m) {
+        if (s[i + m[0].length] === '.') R.fail('A number has two decimal points.');
+        out.push({ t: 'n', v: parseFloat(m[0]) }); i += m[0].length; continue;
+      }
       m = s.slice(i).match(/^[a-z]+/i);
       if (m) {
         const w = m[0].toLowerCase();
@@ -48,6 +52,7 @@
     const ang = function (x) { return opts.deg ? x * Math.PI / 180 : x; };
     const back = function (x) { return opts.deg ? x * 180 / Math.PI : x; };
     const clean = function (x) { return Math.abs(x) < 1e-12 ? 0 : x; };
+    const shown = function (t) { return t.t === 'pw' ? (t.v === 2 ? '²' : '³') : t.t === 'n' ? R.fmtCalc(t.v) : t.t === 'f' ? (NAME[t.v] || t.v) : t.t === 'ans' ? 'Ans' : t.t; };
 
     function expr() {
       let left = term();
@@ -92,6 +97,7 @@
       let x = primary();
       for (;;) {
         if (take('%')) x = { v: x.v / 100, pct: true };
+        else if (peek() && peek().t === 'pw') x = { v: Math.pow(x.v, toks[p++].v) };
         else if (take('!')) {
           if (x.v < 0 || !Number.isInteger(x.v)) R.fail('Factorial (!) works on whole numbers 0 and up.');
           if (x.v > 170) R.fail('That factorial is too big.');
@@ -127,7 +133,7 @@
         return { v: call(t.v, arg) };
       }
       if (t.t === ')') R.fail('A closing bracket has no opening one.');
-      R.fail('Something is missing before "' + t.t + '".');
+      R.fail('Something is missing before "' + shown(t) + '".');
     }
     function call(f, x) {
       switch (f) {
@@ -138,7 +144,7 @@
           return clean(Math.tan(ang(x)));
         }
         case 'asin': case 'acos':
-          if (x < -1 || x > 1) R.fail(f + ' only takes numbers from −1 to 1.');
+          if (x < -1 || x > 1) R.fail(NAME[f] + ' only takes numbers from −1 to 1.');
           return back(f === 'asin' ? Math.asin(x) : Math.acos(x));
         case 'atan': return back(Math.atan(x));
         case 'sqrt': if (x < 0) R.fail('The square root of a negative number isn’t a real number.'); return Math.sqrt(x);
@@ -154,7 +160,7 @@
     const result = expr();
     if (p < toks.length) {
       const t = toks[p];
-      R.fail(t.t === ')' ? 'A closing bracket has no opening one.' : 'I can’t make sense of the part starting at "' + (t.v != null ? t.v : t.t) + '".');
+      R.fail(t.t === ')' ? 'A closing bracket has no opening one.' : 'I can’t make sense of the part starting at "' + shown(t) + '".');
     }
     if (!Number.isFinite(result.v)) R.fail('That’s too big to work with.');
     return result.v;
@@ -162,15 +168,27 @@
 
   R.evalExpr = evaluate;
 
-  /** The Calc keypad's keys as one line, read and shown the same way. The e key's e touching a digit,
-      a point or a word ("2e5", "Anse", "esin") would read as 2×10⁵ or an unknown word, so a times dot
-      goes between them: 2⋅e⋅5. */
+  /** Does the number being typed at the end of these keys already have a point? */
+  R.hasPoint = function (toks) {
+    if (!Array.isArray(toks)) return false;
+    for (let i = toks.length - 1; i >= 0; i--) {
+      const t = String(toks[i]);
+      if (!/^[0-9.]+$/.test(t)) return false;
+      if (t.indexOf('.') >= 0) return true;
+    }
+    return false;
+  };
+
+  /** The Calc keypad's keys as one line, read and shown the same way. A key that starts with a letter
+      (e, Ans, sin…) touching a digit, a point or another word ("2e5", "Anssin", "AnsAns") would read
+      as 2×10⁵ or an unknown word, and so would a digit after e or Ans, so a times dot goes between
+      them: 2⋅e⋅5, Ans⋅sin(30). */
   R.calcText = function (toks) {
     let s = '';
     (Array.isArray(toks) ? toks : []).forEach(function (t, i) {
       t = String(t);
       const prev = i ? String(toks[i - 1]) : '';
-      const touches = (t === 'e' && /[A-Za-z0-9.]$/.test(prev)) || (prev === 'e' && /^[A-Za-z0-9.]/.test(t));
+      const touches = (/^[A-Za-z]/.test(t) && /[A-Za-z0-9.]$/.test(prev)) || (/[A-Za-z]$/.test(prev) && /^[0-9.]/.test(t));
       s += (touches ? '⋅' : '') + t;
     });
     return s;

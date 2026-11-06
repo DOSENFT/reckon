@@ -72,6 +72,13 @@ async function taps(page, seq, scope = '.keys') {
       check(await page.textContent('.ro-main') === '27.1828182846', `${s.name}: Calc 2 e 5 = 27.1828182846 (not 200,000)`);
       await taps(page, 'ac 2 2nd pi - 3 =');
       check(await page.textContent('.ro-main') === '2.4365636569', `${s.name}: Calc 2 e − 3 = 2.4365636569 (not 0.002)`);
+      // the second independent check's finds: x² then a digit, a double point, Ans beside a function
+      await taps(page, 'ac 2 2nd pow 3 =');
+      check(await page.textContent('.ro-main') === '12', `${s.name}: Calc 2 x² 3 = 12 (not 8,388,608)`);
+      await taps(page, 'ac 2 . . 5 =');
+      check(await page.textContent('.ro-main') === '2.5', `${s.name}: Calc 2 . . 5 = 2.5 (the second point does nothing)`);
+      await taps(page, 'ac 5 = ans sin 3 0 ) =');
+      check(await page.textContent('.ro-main') === '2.5', `${s.name}: Calc 5 = Ans sin 30 = 2.5 (not "I don't know Anssin")`);
       await taps(page, 'ac 5 0 + 1 0 % =');
       await page.screenshot({ path: path.join(OUT, `app-${s.name}-calc.png`) });
 
