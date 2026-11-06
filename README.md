@@ -37,6 +37,12 @@ The 🔍 at the top finds any calculator by name or word ("stringer", "quikrete"
 - Under every answer: the same length in inches, feet, yards, meters, cm and mm. **M+ / MR** keep a running total. **≡** shows the tape of past answers; tap one to use it again.
 - Any measurement box in a job tool opens the same Feet / Inch keypad. **Type it** lets you type "2.5 m" instead.
 
+## Turn the phone sideways
+
+- **Job:** the readout on the left with your stored Rise, Run, Diag and Pitch always showing; 32 keys on the right, adding **MC** and **M−**.
+- **Calc:** 40 keys, every 2nd function on its own key (sin⁻¹, cos⁻¹, tan⁻¹, x², ∛, e, log, n!) plus **1/x**, **eˣ** and **10ˣ**.
+- **A calculator** shows its answer on the left and its boxes on the right. What you've typed carries over when you turn the phone.
+
 ## How sure are the answers?
 
 Every calculator carries worked examples, calculated by hand before the code ran, and the tests check them. Every input box is also fed junk (empty, letters, negatives, 0, 1/0, numbers too big or too small for a phone like 1e308, code) and must answer in plain words or refuse. Never NaN, never a blank "—".
@@ -53,8 +59,8 @@ Estimates say so on screen: motor amps (use the NEC table or the nameplate to si
 ## For whoever works on it
 
 ```
-node --test "tests/*.test.js"      # 272 tests: engine, every calculator, the math reader, install/offline files
-node tools/e2e.js 8840             # 61 checks: the real app in Edge at phone and PC size: keypads, all 108 calculators, broken links, install check, offline
+node --test "tests/*.test.js"      # 273 tests: engine, every calculator, the math reader, install/offline files
+node tools/e2e.js 8840             # 115 checks: the real app in Edge upright, sideways (3 sizes, turning mid-sum) and PC: keypads, all 108 calculators, broken links, install check, offline
 python tools/build_sw.py           # after ANY file change: rebuilds the offline file list (a test fails if you forget)
 ```
 

@@ -234,6 +234,7 @@ main.fixed .k { height: auto; }
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-top: 1px solid var(--line-2);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: 12px 14px; padding-bottom: max(14px, env(safe-area-inset-bottom));
   max-width: 540px; margin: 0 auto; max-height: 86dvh; display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; overscroll-behavior: contain;   /* taller than the screen (a phone held sideways): it scrolls, nothing is cut off */
 }
 .sheet-head { display: flex; align-items: center; gap: 8px; }
 .sheet-head h3 { margin: 0; font-size: 15px; font-weight: 800; flex: 1; }
@@ -272,4 +273,83 @@ main.fixed .k { height: auto; }
   :root { --key-h: 44px; --gap: 5px; }
   .ro-main { font-size: 38px; min-height: 44px; }
   .ro-tri { display: none; }
+}
+
+/* ---- a phone held sideways (any short, wide screen, even one wide enough for the PC rules):
+   one slim top row, the readout beside the keys, 8 keys across with more of them (app.js LAND) ---- */
+@media (orientation: landscape) and (max-height: 560px) {
+  :root { --key-h: 44px; --gap: 5px; }
+  .app {
+    max-width: none; column-gap: 8px; row-gap: 0;
+    padding: 0 max(10px, env(safe-area-inset-right)) 0 max(10px, env(safe-area-inset-left));
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto; grid-template-rows: auto minmax(0, 1fr);
+  }
+  .top { display: contents; }
+  .brand { grid-column: 1; grid-row: 1; flex: none; }
+  .brand h1, .brand .where { display: none; }
+  .top > .icon-btn { grid-row: 1; align-self: center; width: 40px; height: 40px; }
+  .top > :nth-child(2) { grid-column: 3; }
+  .top > :nth-child(3) { grid-column: 4; }
+  .top > :nth-child(4) { grid-column: 5; }
+  .tape-btn { display: grid; }
+  .faces { grid-column: 2; grid-row: 1; flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 6px 0; }
+  .face { height: 38px; padding: 0 11px; }
+  main { grid-column: 1 / -1; grid-row: 2; padding: 0 0 max(8px, env(safe-area-inset-bottom)); }
+  .side { display: none; }
+  .k.k-num { font-size: 22px; }
+  .k-op { font-size: 24px; }
+  .k-tri { font-size: 14px; }
+
+  /* the keypads: 8 across, a little air between the function keys and the number pad */
+  main.fixed .keys.k8x4, main.fixed .keys.k8x5 { grid-template-columns: repeat(8, minmax(0, 1fr)); max-height: none; }
+  main.fixed .keys.k8x4 { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+  main.fixed .keys.k8x5 { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+  .keys.k8x4 > .k:nth-child(8n+5), .keys.k8x5 > .k:nth-child(8n+5) { margin-left: 8px; }
+
+  /* the measuring pad pop-up: the value on the left, its keys on the right */
+  .sheet:has(.keys) {
+    max-width: 760px; max-height: 96dvh; display: grid; column-gap: 14px; row-gap: 6px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: auto auto minmax(0, 1fr);
+  }
+  .sheet:has(.keys) .sheet-head { grid-column: 1; grid-row: 1; flex-wrap: wrap; }
+  .sheet:has(.keys) .sheet-value { grid-column: 1; grid-row: 2; font-size: 30px; }
+  .sheet:has(.keys) .sheet-msg { grid-column: 1; grid-row: 3; }
+  .sheet:has(.keys) .keys { grid-column: 2; grid-row: 1 / -1; align-content: center; }
+  .sheet:has(.keys) .k { height: 50px; }
+  .sheet { max-height: 96dvh; }
+}
+
+/* sideways with room (most phones): the readout stands beside the keys, with the job tools under it */
+@media (orientation: landscape) and (max-height: 560px) and (min-width: 640px) {
+  main.fixed { display: grid; grid-template-columns: minmax(0, 36fr) minmax(0, 64fr); grid-template-rows: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 0; }
+  main.fixed .readout { grid-column: 1; grid-row: 1; min-height: 0; overflow: hidden; }
+  main.fixed .readout .ro-main { margin-top: auto; }
+  main.fixed .tools { grid-column: 1; grid-row: 2; padding-top: 8px; }
+  main.fixed .keys { grid-column: 2; grid-row: 1 / -1; }
+  .ro-main { font-size: 40px; min-height: 46px; }
+  .ro-tri { display: grid; grid-template-columns: 1fr 1fr; }
+
+  /* a calculator: the answer on the left, the boxes on the right */
+  main:has(> .result) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; align-items: start; align-content: start; }
+  main:has(> .result) > .cv-head { grid-column: 1 / -1; padding-bottom: 6px; }
+  main > .result { grid-column: 1; grid-row: 2; margin-bottom: 0; max-height: calc(100dvh - 130px); overflow-y: auto; }
+  main > .result.tall { position: sticky; }
+  main > .fields { grid-column: 2; grid-row: 2; padding-bottom: 8px; }
+  .list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* sideways but narrow (a small window): a short readout over the 8-across keys */
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 639.98px) {
+  .readout { padding: 6px 10px; gap: 2px; }
+  .ro-top { min-height: 0; }
+  .ro-main { font-size: 30px; min-height: 34px; }
+  .ro-views, .ro-tri, main.fixed .tools { display: none; }
+  .ro-meta:has(.ro-msg:empty):not(:has(.tag:not(:empty))) { display: none; }   /* an empty message line takes no room */
+  /* Calc: what's typed shares the top line with DEG; the last answer waits on the tape (≡) */
+  .sci-ro { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 8px; row-gap: 0; }
+  .sci-ro > .ro-top { display: contents; }
+  .sci-ro > .ro-top > .ro-line { display: none; }
+  .sci-ro > .ro-top > .chip { grid-column: 2; grid-row: 1; }
+  .sci-ro > .ro-line { grid-column: 1; grid-row: 1; }
+  .sci-ro > .ro-main, .sci-ro > .ro-meta { grid-column: 1 / -1; }
 }

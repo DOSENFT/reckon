@@ -54,6 +54,23 @@ test('Ans beside a function or another Ans is multiplied, never "I don\'t know A
   assert.equal(keys('Ans', 'sin(', '30', ')'), 'Ans⋅sin(30)');
 });
 
+// The sideways Calc pad's own keys (his note, 2026-11-05: "It should increase options… like other calculator apps")
+test('sideways keys: 1/x, 10ˣ and eˣ', () => {
+  const keys = (...k) => R.calcText(k);
+  assert.equal(ev(keys('4', '⁻¹')), 0.25);
+  assert.equal(ev(keys('(', '1', '+', '1', ')', '⁻¹')), 0.5);
+  assert.equal(ev(keys('2', '⁻¹', '⁻¹')), 2);
+  assert.throws(() => ev(keys('0', '⁻¹')), /divide by zero/);
+  assert.throws(() => ev(keys('⁻¹')), /missing before "⁻¹"/);
+  assert.equal(keys('2', '10^(', '3', ')'), '2⋅10^(3)');          // never 210^(3)
+  assert.equal(ev(keys('2', '10^(', '3', ')')), 2000);
+  assert.equal(ev(keys('10^(', '2'), { autoClose: true }), 100);
+  assert.equal(ev(keys('Ans', '10^(', '2', ')'), { ans: 3 }), 300);
+  near(ev(keys('2', 'e^(', '1', ')')), 2 * Math.E);
+  near(ev(keys('sin⁻¹(', '1', ')'), { deg: true }), 90);
+  assert.equal(ev(keys('5', '!')), 120);
+});
+
 test('messages use the names on the keys', () => {
   assert.throws(() => ev('sin⁻¹(2)'), /: sin⁻¹ only takes/);
   assert.throws(() => ev('cos⁻¹(2)'), /cos⁻¹ only takes/);

@@ -163,6 +163,15 @@
     [['1', '1'], ['2', '2'], ['3', '3'], ['pct', '%', 'k-fn', 'Percent'], ['add', '+', 'k-op', 'Plus']],
     [['0', '0'], ['.', '.', '', 'Point'], ['mplus', 'M+', 'k-fn', 'Add to memory'], ['mr', 'MR', 'k-fn', 'Recall memory'], ['eq', '=', 'k-eq', 'Equals']],
   ];
+  // Held sideways (a short, wide screen): 8 keys across, numbers on the right, the job keys on the left,
+  // plus MC and M− that the upright pad has no room for. Must match the sideways rule in app.css.
+  const LAND = window.matchMedia('(orientation: landscape) and (max-height: 560px)');
+  const KEYS_LAND = [
+    [['rise', 'Rise', 'k-tri'], ['run', 'Run', 'k-tri'], ['diag', 'Diag', 'k-tri'], ['pitch', 'Pitch', 'k-tri'], ['7', '7'], ['8', '8'], ['9', '9'], ['div', '÷', 'k-op', 'Divide']],
+    [['ft', 'Feet', 'k-unit'], ['in', 'Inch', 'k-unit'], ['frac', 'a⁄b', 'k-unit', 'Fraction'], ['ac', 'AC', 'k-clear'], ['4', '4'], ['5', '5'], ['6', '6'], ['mul', '×', 'k-op', 'Times']],
+    [['sq', 'x²', 'k-fn', 'Square'], ['sqrt', '√', 'k-fn', 'Square root'], ['pct', '%', 'k-fn', 'Percent'], ['back', '⌫', 'k-fn', 'Back'], ['1', '1'], ['2', '2'], ['3', '3'], ['sub', '−', 'k-op', 'Minus']],
+    [['mc', 'MC', 'k-fn', 'Clear memory'], ['mminus', 'M−', 'k-fn', 'Take from memory'], ['mplus', 'M+', 'k-fn', 'Add to memory'], ['mr', 'MR', 'k-fn', 'Recall memory'], ['0', '0'], ['.', '.', '', 'Point'], ['eq', '=', 'k-eq', 'Equals'], ['add', '+', 'k-op', 'Plus']],
+  ];
   const JOB_TOOLS = ['rafter', 'stairs', 'concrete-slab'];
   let jobDom = null;
 
@@ -185,8 +194,8 @@
       el('div', { class: 'ro-top' }, [line, mem, den]), big, el('div', { class: 'ro-meta' }, [kind, round, msg]), views, tri,
     ]);
     const keyEls = {};
-    const keys = el('div', { class: 'keys', role: 'group', 'aria-label': 'Keypad' });
-    KEYS.forEach(function (row) {
+    const keys = el('div', { class: 'keys' + (LAND.matches ? ' k8x4' : ''), role: 'group', 'aria-label': 'Keypad' });
+    (LAND.matches ? KEYS_LAND : KEYS).forEach(function (row) {
       row.forEach(function (k) {
         const b = el('button', { class: 'k ' + (k[2] || 'k-num'), 'aria-label': k[3] || k[1], 'data-key': k[0] }, [k[1]]);
         b.addEventListener('pointerdown', function () { b.classList.add('down'); });
@@ -284,8 +293,20 @@
     [['1', '1'], ['2', '2'], ['3', '3'], ['%', '%', 'k-fn', 'Percent'], ['+', '+', 'k-op', 'Plus']],
     [['0', '0'], ['.', '.', '', 'Point'], ['back', '⌫', 'k-fn', 'Back'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
   ];
+  // Held sideways: every 2nd function gets its own key, plus 1/x, eˣ and 10ˣ, like the big phone calculators.
+  // Scientific keys on the left, the everyday pad on the right; no 2nd key needed.
+  const SCI_LAND = [
+    [['(', '(', 'k-fn', 'Open bracket'], [')', ')', 'k-fn', 'Close bracket'], ['pi', 'π', 'k-fn', 'Pi'], ['e', 'e', 'k-fn', 'e, 2.71828…'], ['ac', 'AC', 'k-clear', 'All clear'], ['back', '⌫', 'k-fn', 'Back'], ['%', '%', 'k-fn', 'Percent'], ['/', '÷', 'k-op', 'Divide']],
+    [['sin', 'sin', 'k-tri', 'Sine'], ['cos', 'cos', 'k-tri', 'Cosine'], ['tan', 'tan', 'k-tri', 'Tangent'], ['pow', 'xʸ', 'k-fn', 'Power'], ['7', '7'], ['8', '8'], ['9', '9'], ['*', '×', 'k-op', 'Times']],
+    [['asin', 'sin⁻¹', 'k-tri', 'Inverse sine'], ['acos', 'cos⁻¹', 'k-tri', 'Inverse cosine'], ['atan', 'tan⁻¹', 'k-tri', 'Inverse tangent'], ['sq', 'x²', 'k-fn', 'Square'], ['4', '4'], ['5', '5'], ['6', '6'], ['-', '−', 'k-op', 'Minus']],
+    [['ln', 'ln', 'k-fn', 'Natural log'], ['log', 'log', 'k-fn', 'Log base 10'], ['root', '√', 'k-fn', 'Square root'], ['inv', '1/x', 'k-fn', 'One over'], ['1', '1'], ['2', '2'], ['3', '3'], ['+', '+', 'k-op', 'Plus']],
+    [['exp', 'eˣ', 'k-fn', 'e to the power'], ['p10', '10ˣ', 'k-fn', '10 to the power'], ['cbrt', '∛', 'k-fn', 'Cube root'], ['fact', 'n!', 'k-fn', 'Factorial'], ['0', '0'], ['.', '.', '', 'Point'], ['ans', 'Ans', 'k-fn', 'Last answer'], ['=', '=', 'k-eq', 'Equals']],
+  ];
   const SECOND = { sin: ['sin⁻¹(', 'sin⁻¹'], cos: ['cos⁻¹(', 'cos⁻¹'], tan: ['tan⁻¹(', 'tan⁻¹'], pow: ['²', 'x²'], root: ['∛(', '∛'], pi: ['e', 'e'], ln: ['log(', 'log'], '%': ['!', 'n!'] };
-  const FIRST = { sin: 'sin(', cos: 'cos(', tan: 'tan(', pow: '^', root: '√(', pi: 'π', ln: 'ln(', '%': '%', '(': '(', ')': ')', '/': '÷', '*': '×', '-': '−', '+': '+', ans: 'Ans' };
+  const FIRST = { sin: 'sin(', cos: 'cos(', tan: 'tan(', pow: '^', root: '√(', pi: 'π', ln: 'ln(', '%': '%', '(': '(', ')': ')', '/': '÷', '*': '×', '-': '−', '+': '+', ans: 'Ans',
+    e: 'e', asin: 'sin⁻¹(', acos: 'cos⁻¹(', atan: 'tan⁻¹(', sq: '²', log: 'log(', inv: '⁻¹', exp: 'e^(', p10: '10^(', cbrt: '∛(', fact: '!' };
+  // after =, these start a new line; the rest (operations, x², 1/x, n!…) carry the answer on
+  const STARTS = ['sin', 'cos', 'tan', 'root', 'pi', 'ln', '(', 'ans', 'e', 'asin', 'acos', 'atan', 'log', 'exp', 'p10', 'cbrt'];
   let sciDom = null;
 
   function drawSci(main) {
@@ -296,12 +317,13 @@
     const exprEl = el('div', { class: 'ro-line', style: 'direction:ltr;font-size:20px;color:var(--readout-text);white-space:normal;overflow-wrap:anywhere;min-height:26px' });
     const big = el('div', { class: 'ro-main', 'aria-live': 'polite', 'aria-label': 'Answer' });
     const msg = el('span', { class: 'ro-msg' });
-    const readout = el('section', { class: 'readout', 'aria-label': 'Readout' }, [
+    const readout = el('section', { class: 'readout sci-ro', 'aria-label': 'Readout' }, [
       el('div', { class: 'ro-top' }, [hist, second, mode]), exprEl, big, el('div', { class: 'ro-meta' }, [msg]),
     ]);
     const keyEls = {};
-    const keys = el('div', { class: 'keys', role: 'group', 'aria-label': 'Keypad' });
-    SCI_KEYS.forEach(function (row) {
+    if (LAND.matches) sci.second = false;
+    const keys = el('div', { class: 'keys' + (LAND.matches ? ' k8x5' : ''), role: 'group', 'aria-label': 'Keypad' });
+    (LAND.matches ? SCI_LAND : SCI_KEYS).forEach(function (row) {
       row.forEach(function (k) {
         const b = el('button', { class: 'k ' + (k[2] || 'k-num'), 'aria-label': k[3] || k[1], 'data-key': k[0] }, [k[1]]);
         b.addEventListener('pointerdown', function () { b.classList.add('down'); });
@@ -340,7 +362,7 @@
     }
     if (sci.fresh) {   // after =: a digit starts over, an operation carries the answer on
       sci.fresh = false;
-      if (isDigit || ['sin', 'cos', 'tan', 'root', 'pi', 'ln', '(', 'ans'].indexOf(k) >= 0) sci.toks = [];
+      if (isDigit || STARTS.indexOf(k) >= 0) sci.toks = [];
       else sci.toks = ['Ans'];
     }
     let tok = isDigit ? k : FIRST[k];
@@ -363,8 +385,10 @@
       const b = d.keyEls[k];
       if (b) b.textContent = sci.second ? SECOND[k][1] : SCI_KEYS.reduce(function (a, r) { return a.concat(r); }, []).find(function (x) { return x[0] === k; })[1];
     });
-    d.keyEls['2nd'].classList.toggle('on', sci.second);
-    d.keyEls['2nd'].setAttribute('aria-pressed', sci.second ? 'true' : 'false');
+    if (d.keyEls['2nd']) {   // the upright pad only: sideways every function has its own key
+      d.keyEls['2nd'].classList.toggle('on', sci.second);
+      d.keyEls['2nd'].setAttribute('aria-pressed', sci.second ? 'true' : 'false');
+    }
     const text = R.calcText(sci.toks);
     d.expr.textContent = sci.fresh ? '' : text;
     let live = '';
@@ -669,6 +693,13 @@
   }
 
   window.addEventListener('hashchange', render);
+  // turning the phone redraws a keypad face with its sideways or upright keys; what's typed stays (it lives in kp and sci)
+  const turned = function () {
+    sci.second = false;
+    const r = route();
+    if (r.view === 'face' && (r.face === 'job' || r.face === 'calc')) render();
+  };
+  if (LAND.addEventListener) LAND.addEventListener('change', turned); else if (LAND.addListener) LAND.addListener(turned);
   window.addEventListener('resize', function () { if (jobDom) updateJob(); if (sciDom) updateSci(); });
   render();
   R.app = { render: render, keypad: kp, go: go };

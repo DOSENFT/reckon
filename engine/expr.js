@@ -20,7 +20,8 @@
     while (i < s.length) {
       const c = s[i];
       if (/\s/.test(c)) { i++; continue; }
-      if (c === '²' || c === '³') { out.push({ t: 'pw', v: c === '²' ? 2 : 3 }); i++; continue; }   // x² binds to its own number: 2²3 is 4 × 3
+      if (c === '²' || c === '³') { out.push({ t: 'pw', v: c === '²' ? 2 : 3 }); i++; continue; }
+      if (s.startsWith('⁻¹', i)) { out.push({ t: 'pw', v: -1 }); i += 2; continue; }                 // the 1/x key: 4⁻¹ is 0.25   // x² binds to its own number: 2²3 is 4 × 3
       let m = s.slice(i).match(/^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?/i);
       if (m) {
         if (s[i + m[0].length] === '.') R.fail('A number has two decimal points.');
@@ -52,7 +53,7 @@
     const ang = function (x) { return opts.deg ? x * Math.PI / 180 : x; };
     const back = function (x) { return opts.deg ? x * 180 / Math.PI : x; };
     const clean = function (x) { return Math.abs(x) < 1e-12 ? 0 : x; };
-    const shown = function (t) { return t.t === 'pw' ? (t.v === 2 ? '²' : '³') : t.t === 'n' ? R.fmtCalc(t.v) : t.t === 'f' ? (NAME[t.v] || t.v) : t.t === 'ans' ? 'Ans' : t.t; };
+    const shown = function (t) { return t.t === 'pw' ? ({ 2: '²', 3: '³', '-1': '⁻¹' })[t.v] : t.t === 'n' ? R.fmtCalc(t.v) : t.t === 'f' ? (NAME[t.v] || t.v) : t.t === 'ans' ? 'Ans' : t.t; };
 
     function expr() {
       let left = term();
@@ -97,7 +98,11 @@
       let x = primary();
       for (;;) {
         if (take('%')) x = { v: x.v / 100, pct: true };
-        else if (peek() && peek().t === 'pw') x = { v: Math.pow(x.v, toks[p++].v) };
+        else if (peek() && peek().t === 'pw') {
+          const k = toks[p++].v;
+          if (k < 0 && x.v === 0) R.fail('Can’t divide by zero.');
+          x = { v: Math.pow(x.v, k) };
+        }
         else if (take('!')) {
           if (x.v < 0 || !Number.isInteger(x.v)) R.fail('Factorial (!) works on whole numbers 0 and up.');
           if (x.v > 170) R.fail('That factorial is too big.');
@@ -188,7 +193,8 @@
     (Array.isArray(toks) ? toks : []).forEach(function (t, i) {
       t = String(t);
       const prev = i ? String(toks[i - 1]) : '';
-      const touches = (/^[A-Za-z]/.test(t) && /[A-Za-z0-9.]$/.test(prev)) || (/[A-Za-z]$/.test(prev) && /^[0-9.]/.test(t));
+      const touches = (/^[A-Za-z]/.test(t) && /[A-Za-z0-9.]$/.test(prev)) || (/[A-Za-z]$/.test(prev) && /^[0-9.]/.test(t))
+        || (t.length > 1 && /^[0-9]/.test(t) && /[0-9.]$/.test(prev));   // the 10ˣ key after a digit: 2⋅10^(3), never 210^(3)
       s += (touches ? '⋅' : '') + t;
     });
     return s;
