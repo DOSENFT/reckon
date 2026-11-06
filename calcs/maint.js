@@ -22,7 +22,7 @@
     { id: 'm-to-ft', key: 'm→ft', name: 'Meters to feet', from: 'm', to: 'ft', note: function (v) { return '≈ ' + LEN(v * 12); }, examples: [{ x: 3, v: '9.84252', note: /9' 10-1\/8"/ }] }, 0.3048);
   pair({ id: 'gal-to-l', key: 'gal→L', name: 'Gallons to liters', from: 'gal', to: 'L', examples: [{ x: 5, v: '18.9271' }] },
     { id: 'l-to-gal', key: 'L→gal', name: 'Liters to gallons', from: 'L', to: 'gal', examples: [{ x: 20, v: '5.28344' }] }, 3.785411784);
-  pair({ id: 'psi-to-bar', key: 'psi→bar', name: 'psi to bar', from: 'psi', to: 'bar', min: -14.6959, minMsg: 'that’s below a perfect vacuum (−14.7 psi).', examples: [{ x: 30, v: '2.06843' }, { x: -20, error: /vacuum/ }] },
+  pair({ id: 'psi-to-bar', key: 'psi→bar', name: 'psi to bar', from: 'psi', to: 'bar', min: -1.01325 / 0.0689475729, minMsg: 'that’s below a perfect vacuum (−14.7 psi).', examples: [{ x: 30, v: '2.06843' }, { x: -20, error: /vacuum/ }] },
     { id: 'bar-to-psi', key: 'bar→psi', name: 'bar to psi', from: 'bar', to: 'psi', min: -1.01325, minMsg: 'that’s below a perfect vacuum (−1.01 bar).', examples: [{ x: 2, v: '29.0075' }] }, 0.0689475729);
   pair({ id: 'lb-to-kg', key: 'lb→kg', name: 'Pounds to kg', from: 'lb', to: 'kg', examples: [{ x: 50, v: '22.6796' }] },
     { id: 'kg-to-lb', key: 'kg→lb', name: 'kg to pounds', from: 'kg', to: 'lb', examples: [{ x: 10, v: '22.0462' }] }, 0.45359237);
@@ -31,10 +31,10 @@
     examples: [{ x: 7.38, v: '7.375', note: /^7-3\/8"$/ }, { x: 0.3, v: '0.3125', note: /^5\/16"$/ }, { x: 2.97, v: '3' }] });
 
   // ---- Electric ----
-  pair({ id: 'w-to-a120', key: 'W→A 120', name: 'Watts to amps at 120 V', from: 'W', to: 'A', note: function () { return 'at 120 V'; }, examples: [{ x: 1500, v: '12.5' }] },
-    { id: 'a-to-w120', key: 'A→W 120', name: 'Amps to watts at 120 V', from: 'A', to: 'W', note: function () { return 'at 120 V'; }, examples: [{ x: 15, v: '1,800' }] }, 1 / 120);
-  pair({ id: 'w-to-a240', key: 'W→A 240', name: 'Watts to amps at 240 V', from: 'W', to: 'A', note: function () { return 'at 240 V'; }, examples: [{ x: 4800, v: '20' }] },
-    { id: 'a-to-w240', key: 'A→W 240', name: 'Amps to watts at 240 V', from: 'A', to: 'W', note: function () { return 'at 240 V'; }, examples: [{ x: 30, v: '7,200' }] }, 1 / 240);
+  pair({ id: 'w-to-a120', key: 'W→A 120', name: 'Watts to amps at 120 V', from: 'W', to: 'A', note: function () { return 'at 120 V, for heaters and lights'; }, examples: [{ x: 1500, v: '12.5' }] },
+    { id: 'a-to-w120', key: 'A→W 120', name: 'Amps to watts at 120 V', from: 'A', to: 'W', note: function () { return 'at 120 V, for heaters and lights'; }, examples: [{ x: 15, v: '1,800' }] }, 1 / 120);
+  pair({ id: 'w-to-a240', key: 'W→A 240', name: 'Watts to amps at 240 V', from: 'W', to: 'A', note: function () { return 'at 240 V, for heaters and lights'; }, examples: [{ x: 4800, v: '20' }] },
+    { id: 'a-to-w240', key: 'A→W 240', name: 'Amps to watts at 240 V', from: 'A', to: 'W', note: function () { return 'at 240 V, for heaters and lights'; }, examples: [{ x: 30, v: '7,200' }] }, 1 / 240);
   const BREAKERS = [15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 110, 125, 150, 175, 200, 225, 250, 300, 350, 400];   // NEC 240.6(A)
   R.quickKey({ id: 'load80', key: '80% load', name: 'Most continuous amps on a breaker (80%)', from: 'A breaker', to: 'A', min: 0, minMsg: 'a breaker can’t be less than 0 A.',
     run: function (x) { return x * 0.8; }, note: function (v, x) { return 'most continuous load on a ' + R.fmt(x, 2) + ' A breaker'; },
@@ -52,8 +52,8 @@
       run: function (x) { return x * 128 / m[0]; }, note: function (v) { return R.fmt(v * 29.5735, 1) + ' mL'; },
       examples: [{ x: 1, v: m[1], note: new RegExp('^' + m[3].replace('.', '\\.') + ' mL$') }, { x: 2.5, v: m[2] }] });
   });
-  pair({ id: 'lp-gal-to-lb', key: 'LP→lb', name: 'Propane gallons to pounds (4.24 lb/gal)', from: 'gal LP', to: 'lb', examples: [{ x: 5, v: '21.2' }] },
-    { id: 'lp-lb-to-gal', key: 'lb→LP', name: 'Propane pounds to gallons (4.24 lb/gal)', from: 'lb LP', to: 'gal', examples: [{ x: 20, v: '4.71698' }] }, 4.24);
+  pair({ id: 'lp-gal-to-lb', key: 'LP→lb', name: 'Propane gallons to pounds (4.24 lb/gal)', from: 'gal LP', to: 'lb', note: function () { return '4.24 lb a gallon at 60 °F'; }, examples: [{ x: 5, v: '21.2', note: /4\.24 lb a gallon/ }] },
+    { id: 'lp-lb-to-gal', key: 'lb→LP', name: 'Propane pounds to gallons (4.24 lb/gal)', from: 'lb LP', to: 'gal', note: function () { return '4.24 lb a gallon at 60 °F'; }, examples: [{ x: 20, v: '4.71698' }] }, 4.24);
   pair({ id: 'btu-to-ton', key: 'BTU→ton', name: 'BTU/h to tons of cooling', from: 'BTU/h', to: 'tons', examples: [{ x: 36000, v: '3' }] },
     { id: 'ton-to-btu', key: 'ton→BTU', name: 'Tons of cooling to BTU/h', from: 'tons', to: 'BTU/h', examples: [{ x: 2.5, v: '30,000' }] }, 1 / 12000);
   pair({ id: 'btu-to-kw', key: 'BTU→kW', name: 'BTU/h to kW', from: 'BTU/h', to: 'kW', examples: [{ x: 5000, v: '1.46536' }] },
@@ -67,8 +67,8 @@
   });
   pair({ id: 'ft3-to-gal', key: 'ft³→gal', name: 'Cubic feet to gallons', from: 'ft³', to: 'gal', examples: [{ x: 10, v: '74.8052' }] },
     { id: 'gal-to-ft3', key: 'gal→ft³', name: 'Gallons to cubic feet', from: 'gal', to: 'ft³', examples: [{ x: 100, v: '13.3681' }] }, 7.48051948);
-  pair({ id: 'psi-to-head', key: 'psi→head', name: 'Water pressure to feet of head (2.31 ft per psi)', from: 'psi', to: 'ft of head', examples: [{ x: 50, v: '115.5' }] },
-    { id: 'head-to-psi', key: 'head→psi', name: 'Feet of head to water pressure', from: 'ft of head', to: 'psi', examples: [{ x: 100, v: '43.29' }] }, 2.31);
+  pair({ id: 'psi-to-head', key: 'psi→head', name: 'Water pressure to feet of head (2.31 ft per psi)', from: 'psi', to: 'ft of head', note: function () { return '2.31 ft per psi'; }, examples: [{ x: 50, v: '115.5', note: /2\.31 ft per psi/ }] },
+    { id: 'head-to-psi', key: 'head→psi', name: 'Feet of head to water pressure (2.31 ft per psi)', from: 'ft of head', to: 'psi', note: function () { return '2.31 ft per psi'; }, examples: [{ x: 100, v: '43.29' }] }, 2.31);
 
   // ---- the tools those tabs open ----
   R.calc({
@@ -81,14 +81,15 @@
     run: function (v) {
       const oz = v.gas * 128 / v.ratio;
       return [
-        { label: 'Oil', value: R.fmt(oz, 2) + ' fl oz', big: true, note: 'for ' + R.fmt(v.gas, 2) + ' gal of gas at ' + R.fmt(v.ratio, 1) + ':1' },
-        { label: 'Oil in mL', value: R.fmt(oz * 29.5735, 0) + ' mL' },
+        { label: 'Oil', value: R.fmt(oz, oz < 1 ? 3 : 2) + ' fl oz', big: true, note: 'for ' + R.fmt(v.gas, 2) + ' gal of gas at ' + R.fmt(v.ratio, 1) + ':1' },
+        { label: 'Oil in mL', value: R.fmt(oz * 29.5735, oz * 29.5735 < 10 ? 1 : 0) + ' mL' },
         { label: 'Gas in liters', value: R.fmt(v.gas * 3.785411784, 2) + ' L' },
       ];
     },
     examples: [
       { in: {}, out: { 'Oil': '2.56 fl oz', 'Oil in mL': '76 mL', 'Gas in liters': '3.79 L' } },
       { in: { gas: '2.5', ratio: '40' }, out: { 'Oil': '8 fl oz' } },
+      { in: { gas: '0.01', ratio: '200' }, out: { 'Oil': '0.006 fl oz', 'Oil in mL': '0.2 mL' } },   // 0.01 × 128 ÷ 200 = 0.0064 oz = 0.19 mL
       { in: { ratio: '5' }, error: 'ratio' },
     ],
   });
@@ -132,7 +133,7 @@
       const mins = v.gal / v.gpm;
       if (mins > 60 * 24 * 365 * 10) R.fail('That’s more than 10 years. Check the flow.', 'gpm');
       return [
-        { label: 'Time', value: R.hm(mins), big: true, note: 'hours:minutes' },
+        mins < 1 ? { label: 'Time', value: R.fmt(mins * 60, 0) + ' sec', big: true, note: 'under a minute' } : { label: 'Time', value: R.hm(mins), big: true, note: 'hours:minutes' },
         { label: 'Minutes', value: R.fmt(mins, 1) },
         { label: 'Hours', value: R.fmt(mins / 60, 2) },
         { label: 'Days', value: R.fmt(mins / 1440, 2) },
@@ -141,6 +142,7 @@
     examples: [
       { in: {}, out: { 'Time': '1:40', 'Minutes': '100', 'Hours': '1.67' } },
       { in: { gal: '20000', gpm: '10' }, out: { 'Time': '33:20', 'Days': '1.39' } },
+      { in: { gal: '2', gpm: '5' }, out: { 'Time': '24 sec', 'Minutes': '0.4' } },   // 2 ÷ 5 = 0.4 min = 24 s
       { in: { gpm: '0' }, error: 'gpm' },
     ],
   });

@@ -24,11 +24,12 @@ for (const q of R.QUICK) {
   });
 
   test(`quick key ${q.key}: bad numbers get plain words, never NaN`, () => {
-    for (const x of [NaN, Infinity, -Infinity, 1e308, -1e308, 1e-308, -5, 0, undefined, '12']) {
+    for (const x of [NaN, Infinity, -Infinity, 1e308, -1e308, 1e306, 3e305, 1e300, 1e20, 1e-308, -5, 0, undefined, '12']) {
       try {
         const r = R.applyQuick(q.id, x);
         assert.ok(Number.isFinite(r.v), `${q.id}(${x}) gave ${r.v}`);
         assert.ok(!/NaN|Infinity|undefined/.test(r.line + r.note), `${q.id}(${x}): ${r.line} ${r.note}`);
+        assert.ok(!/\de[+−-]?\d/.test(r.note), `${q.id}(${x}): a hint in e-notation: ${r.note}`);
       } catch (e) {
         assert.ok(e instanceof R.InputError, `${q.id}(${x}) crashed: ${e && e.message}`);
         assert.ok(e.message.length < 160 && !/undefined|NaN|\[object/.test(e.message), `${q.id}(${x}): ${e.message}`);
@@ -80,6 +81,26 @@ test('an unknown key and a malformed key are refused', () => {
   assert.throws(() => R.quickKey({ id: 'Bad Id' }), /id/);
   assert.throws(() => R.quickKey({ id: 'q-test-1', key: 'x', name: 'X', run() { return 1; }, examples: [] }), /worked example/);
   assert.throws(() => R.quickKey({ id: 'q-test-2', key: 'x', name: 'X', examples: [{}] }), /run\(\)/);
+});
+
+test('every flip goes back where it started, even at the limits (the independent check’s vacuum find)', () => {
+  for (const g of R.QGROUPS) for (const s of g.slots) {
+    if (!Array.isArray(s)) continue;
+    const fwd = R.getQuick(s[0]);
+    for (const x of [fwd.min != null ? fwd.min : 0, 1, 72, 1234.5].filter((n) => n >= (fwd.min != null ? fwd.min : -Infinity))) {
+      const there = R.applyQuick(s[0], x).v;
+      const back = R.applyQuick(s[1], there).v;
+      assert.ok(Math.abs(back - x) <= 1e-9 * Math.max(1, Math.abs(x)), `${s[0]} → ${s[1]} at ${x}: ${back}`);
+    }
+  }
+  assert.equal(R.applyQuick('psi-to-bar', R.applyQuick('bar-to-psi', -1.01325).v).shown, '−1.01325');
+});
+
+test('the rules a number rests on are on screen (2.31 ft per psi, 4.24 lb a gallon, heaters and lights)', () => {
+  assert.match(R.applyQuick('psi-to-head', 50).note, /2\.31 ft per psi/);
+  assert.match(R.applyQuick('head-to-psi', 100).note, /2\.31 ft per psi/);
+  assert.match(R.applyQuick('lp-lb-to-gal', 20).note, /4\.24 lb a gallon/);
+  for (const id of ['w-to-a120', 'a-to-w120', 'w-to-a240', 'a-to-w240']) assert.match(R.applyQuick(id, 1000).note, /heaters and lights/);
 });
 
 test('a conversion shows 6 significant digits; its full value stays for more math', () => {

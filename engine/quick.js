@@ -29,13 +29,15 @@
     const def = R.getQuick(id);
     if (!def) R.fail('That key isn’t known.');
     if (typeof x !== 'number' || !Number.isFinite(x)) R.fail(def.name + ': type a number first.');
-    if (def.min != null && x < def.min) R.fail(def.name + ': ' + (def.minMsg || 'the number must be at least ' + R.fmtCalc(def.min) + '.'));
-    if (def.max != null && x > def.max) R.fail(def.name + ': ' + (def.maxMsg || 'the number must be at most ' + R.fmtCalc(def.max) + '.'));
+    const slack = function (lim) { return 1e-12 * Math.max(1, Math.abs(lim)); };   // a limit reached by flipping back lands within rounding of it
+    if (def.min != null && x < def.min - slack(def.min)) R.fail(def.name + ': ' + (def.minMsg || 'the number must be at least ' + R.fmtCalc(def.min) + '.'));
+    if (def.max != null && x > def.max + slack(def.max)) R.fail(def.name + ': ' + (def.maxMsg || 'the number must be at most ' + R.fmtCalc(def.max) + '.'));
     if (def.positive && !(x > 0)) R.fail(def.name + ': the number must be more than 0.');
     const v = def.run(x);
     if (typeof v !== 'number' || !Number.isFinite(v)) R.fail(def.name + ': that number is too big or too small to work out.');
     const unit = def.to || '';
-    const note = typeof def.note === 'function' ? def.note(v, x) : '';
+    let note = typeof def.note === 'function' ? String(def.note(v, x)) : '';
+    if (/NaN|Infinity|undefined|\de[+−-]?\d/.test(note)) note = '';   // a hint is for everyday sizes: past them it's left off, never shown broken
     const shown = R.fmtCalc(Number(v.toPrecision(6)));   // 6 significant digits on screen; the full value stays for Ans
     const line = R.fmtCalc(x) + (def.from ? ' ' + def.from : '') + ' → ' + shown + (unit ? ' ' + unit : '');
     return { v: v, shown: shown, line: line, unit: unit, note: note || '' };
